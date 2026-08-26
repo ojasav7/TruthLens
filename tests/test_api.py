@@ -296,3 +296,142 @@ class TestAnalysesEndpoint:
         resp = client.get("/analyses?limit=5")
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
+
+
+class TestInvestigationsEndpoint:
+    def test_create_and_get_investigation(self, client):
+        # First create an analysis
+        resp = client.post("/analyze", data={"text": "Test for investigation"})
+        assert resp.status_code == 200
+        analysis_id = resp.json()["id"]
+
+        # Create investigation
+        resp = client.post(f"/investigations/{analysis_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "case_id" in data
+        assert data["status"] == "OPEN"
+        assert data["evidence_count"] > 0
+
+        # Get investigation
+        case_id = data["case_id"]
+        resp = client.get(f"/investigations/{case_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["case_id"] == case_id
+        assert len(data["evidence"]) > 0
+        assert len(data["audit_trail"]) > 0
+        assert "strength" in data
+        assert "agreement" in data
+
+    def test_get_audit_trail(self, client):
+        resp = client.post("/analyze", data={"text": "Audit trail test"})
+        analysis_id = resp.json()["id"]
+        resp = client.post(f"/investigations/{analysis_id}")
+        case_id = resp.json()["case_id"]
+
+        resp = client.get(f"/investigations/{case_id}/audit")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["events"]) > 0
+        assert data["events"][0]["event_type"] == "CASE_CREATED"
+
+    def test_investigation_not_found(self, client):
+        resp = client.get("/investigations/nonexistent")
+        assert resp.status_code == 404
+
+    def test_investigation_has_cross_modal_and_explanation(self, client):
+        resp = client.post("/analyze", data={"text": "Cross-modal test"})
+        analysis_id = resp.json()["id"]
+        resp = client.post(f"/investigations/{analysis_id}")
+        case_id = resp.json()["case_id"]
+
+        resp = client.get(f"/investigations/{case_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "cross_modal_analysis" in data
+        assert "explanation" in data
+        assert "category" in data["explanation"]
+        assert data["explanation"]["category"] in ("WHY_FLAGGED", "WHY_NOT_FLAGGED", "WHAT_REQUIRES_REVIEW")
+
+    def test_video_timeline_endpoint(self, client):
+        resp = client.get("/investigations/nonexistent/timeline")
+        assert resp.status_code == 404
+
+
+class TestCaseManagement:
+    def test_create_and_list_cases(self, client):
+        resp = client.post("/cases", json={"title": "Test Case", "description": "Testing case mgmt"})
+        assert resp.status_code == 200
+        case_id = resp.json()["case_id"]
+
+        resp = client.get("/cases")
+        assert resp.status_code == 200
+        assert any(c["case_id"] == case_id for c in resp.json())
+
+    def test_get_case(self, client):
+        resp = client.post("/cases", json={"title": "Get Test"})
+        case_id = resp.json()["case_id"]
+
+        resp = client.get(f"/cases/{case_id}")
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "Get Test"
+        assert resp.json()["status"] == "OPEN"
+
+    def test_submit_review(self, client):
+        resp = client.post("/cases", json={"title": "Review Test"})
+        case_id = resp.json()["case_id"]
+
+        resp = client.post(f"/cases/{case_id}/review", json={
+            "reviewer_id": "reviewer1",
+            "verdict": "MANIPULATED",
+            "notes": "Confirmed fake"
+        })
+        assert resp.status_code == 200
+        assert resp.json()["verdict"] == "MANIPULATED"
+
+        # Case should be resolved
+        resp = client.get(f"/cases/{case_id}")
+        assert resp.json()["status"] == "RESOLVED"
+        assert len(resp.json()["reviews"]) == 1
+
+    def test_invalid_review_verdict(self, client):
+        resp = client.post("/cases", json={"title": "Bad Review"})
+        case_id = resp.json()["case_id"]
+
+        resp = client.post(f"/cases/{case_id}/review", json={
+            "reviewer_id": "r1", "verdict": "INVALID"
+        })
+        assert resp.status_code == 400
+
+
+class TestClaimExtraction:
+    def test_extract_claims(self, client):
+        resp = client.post("/stretch/claims", json={
+            "text": "Scientists discovered a new species. The government announced new policies. Climate change is accelerating."
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "claims" in data
+        assert data["count"] >= 2
+        assert all("id" in c and "text" in c for c in data["claims"])
+
+    def test_extract_claims_empty(self, client):
+        resp = client.post("/stretch/claims", json={"text": ""})
+        assert resp.status_code == 200
+        assert resp.json()["count"] == 0
+
+
+class TestResearchEndpoints:
+    def test_performance_endpoint(self, client):
+        resp = client.get("/performance")
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), dict)
+
+    def test_features_endpoint(self, client):
+        resp = client.get("/features")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "INVESTIGATION_MODE" in data
+        assert "CONTRADICTION_ENGINE" in data
+        assert all(isinstance(v, bool) for v in data.values())

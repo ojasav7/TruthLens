@@ -12,7 +12,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from backend.db.database import engine, Base
-from backend.routers import text, image, video, audio, analyze, stretch
+from backend.db import models, models_advanced  # noqa: F401 — register tables for create_all
+from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases
 from backend.services.model_loader import load_all_models
 
 # Load environment variables
@@ -60,6 +61,8 @@ app.include_router(video.router, prefix="/predict", tags=["Video"])
 app.include_router(audio.router, prefix="/predict", tags=["Audio"])
 app.include_router(analyze.router, tags=["Fusion"])
 app.include_router(stretch.router, prefix="/stretch", tags=["Stretch Features"])
+app.include_router(investigations.router)
+app.include_router(cases.router)
 
 
 @app.get("/", tags=["Health"])
@@ -72,3 +75,17 @@ async def root():
 @limiter.exempt
 async def health():
     return {"status": "healthy"}
+
+
+@app.get("/performance", tags=["Research"])
+@limiter.exempt
+async def performance():
+    from backend.services.performance_monitor import monitor
+    return monitor.get_summary()
+
+
+@app.get("/features", tags=["Research"])
+@limiter.exempt
+async def features():
+    from backend.config import flags
+    return {k: getattr(flags, k) for k in dir(flags) if not k.startswith("_")}

@@ -78,3 +78,39 @@ async def check_source_credibility(request: CredibilityRequest):
 
     result = check_url(request.url)
     return CredibilityResponse(**result)
+
+
+# --- Screenshot Investigation ---
+class ScreenshotResponse(BaseModel):
+    status: str
+    extracted_text: str
+    claims: list[dict]
+    claim_count: int
+
+
+@router.post("/screenshot")
+async def investigate_screenshot(file: UploadFile = File(...)):
+    """Investigate a screenshot: OCR → extract claims → ready for NLP analysis."""
+    from backend.services.screenshot_service import investigate_screenshot as _investigate
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    try:
+        contents = await file.read()
+        result = await _investigate(contents, file.filename or "screenshot.png")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Screenshot investigation failed: {e}")
+
+
+# --- Claim Extraction ---
+class ClaimRequest(BaseModel):
+    text: str
+
+
+@router.post("/claims")
+async def extract_claims_endpoint(request: ClaimRequest):
+    """Extract individual claims from text for independent analysis."""
+    from backend.services.claim_extractor import extract_claims
+    return {"claims": extract_claims(request.text), "count": len(extract_claims(request.text))}
