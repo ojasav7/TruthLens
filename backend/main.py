@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.db.database import engine, Base
-from backend.routers import text, image, video, audio, analyze
+from backend.routers import text, image, video, audio, analyze, stretch
 from backend.services.model_loader import load_all_models
 
 # Load environment variables
@@ -52,6 +52,7 @@ app.include_router(image.router, prefix="/predict", tags=["Image"])
 app.include_router(video.router, prefix="/predict", tags=["Video"])
 app.include_router(audio.router, prefix="/predict", tags=["Audio"])
 app.include_router(analyze.router, tags=["Fusion"])
+app.include_router(stretch.router, prefix="/stretch", tags=["Stretch Features"])
 
 
 @app.get("/", tags=["Health"])
