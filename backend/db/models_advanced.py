@@ -112,8 +112,57 @@ class EvidenceRelation(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     case_id = Column(String(36), ForeignKey("investigation_cases.id"), nullable=False)
-    source_evidence_id = Column(String(36), nullable=False)  # from evidence.id or node type
+    source_evidence_id = Column(String(36), nullable=False)
     target_evidence_id = Column(String(36), nullable=False)
-    relation_type = Column(String(50), nullable=False)  # SUPPORTS, CONTRADICTS, PRODUCED_BY, etc.
+    relation_type = Column(String(50), nullable=False)
     metadata_json = Column(JSON, default=dict)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class APIKey(Base):
+    """API keys for public API access."""
+    __tablename__ = "api_keys"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(100), nullable=False)
+    key_hash = Column(String(64), unique=True, nullable=False)
+    org_id = Column(String(36), nullable=True)
+    rate_limit = Column(String(20), default="100")  # requests per minute
+    is_active = Column(String(5), default="true")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_used_at = Column(DateTime, nullable=True)
+
+
+class Organization(Base):
+    """Multi-tenant organizations."""
+    __tablename__ = "organizations"
+
+    id = Column(String(36), primary_key=True, default=lambda: f"ORG-{uuid.uuid4().hex[:8].upper()}")
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    owner_id = Column(String(100), nullable=False)
+    settings_json = Column(JSON, default=dict)
+
+
+class OrgMember(Base):
+    """Organization members."""
+    __tablename__ = "org_members"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    org_id = Column(String(36), ForeignKey("organizations.id"), nullable=False)
+    user_id = Column(String(100), nullable=False)
+    role = Column(String(20), default="member")  # admin, member, viewer
+    joined_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class StreamSession(Base):
+    """Live streaming sessions."""
+    __tablename__ = "stream_sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(100), nullable=True)
+    status = Column(String(20), default="active")  # active, ended
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    ended_at = Column(DateTime, nullable=True)
+    results_json = Column(JSON, default=list)

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 350px; font-family: -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; padding: 16px; }
+    h1 { font-size: 18px; margin-bottom: 12px; color: #60a5fa; }
+    textarea { width: 100%; height: 80px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; padding: 10px; font-size: 13px; resize: vertical; }
+    button { width: 100%; padding: 10px; margin-top: 8px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    .result { margin-top: 12px; padding: 12px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; }
+    .fake { border-color: #ef4444; }
+    .real { border-color: #22c55e; }
+    .label { font-size: 20px; font-weight: 700; }
+    .fake .label { color: #fca5a5; }
+    .real .label { color: #86efac; }
+    .confidence { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+    .settings { margin-top: 12px; }
+    .settings input { width: 100%; padding: 8px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; font-size: 12px; }
+    .settings label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; }
+    #status { font-size: 11px; color: #64748b; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 TruthLens</h1>
+  <textarea id="text" placeholder="Paste text to analyze..."></textarea>
+  <button id="analyzeBtn">Analyze Text</button>
+  <button id="pageBtn" style="background: #475569;">Analyze This Page</button>
+  <div id="result"></div>
+  <div class="settings">
+    <label>API URL</label>
+    <input id="apiUrl" type="text" placeholder="http://localhost:8000" />
+  </div>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

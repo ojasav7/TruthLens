@@ -550,3 +550,70 @@ class TestAdvancedFeatures:
         data = resp.json()
         assert data["credibility"] == "high"
         assert data["risk_score"] < 0.5
+
+
+class TestStageFFeatures:
+    # Hindi/Hinglish
+    def test_multilingual_endpoint(self, client):
+        resp = client.post("/predict/text/multilingual", json={"text": "Breaking news today"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "label" in data
+        assert "confidence" in data
+
+    def test_language_detection(self, client):
+        from backend.services.language_router import detect_language
+        assert detect_language("This is a longer English sentence for reliable detection") in ("en", "nl", "fr")
+        assert detect_language("") == "unknown"
+
+    # Public API Keys
+    def test_api_key_crud(self, client):
+        resp = client.post("/api-keys", json={"name": "test-key", "rate_limit": 50})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "api_key" in data
+        assert data["api_key"].startswith("tl_live_")
+
+        resp = client.get("/api-keys")
+        assert resp.status_code == 200
+        assert len(resp.json()) > 0
+
+    # Organizations
+    def test_org_crud(self, client):
+        resp = client.post("/orgs", json={"name": "Test Org", "owner_id": "user1"})
+        assert resp.status_code == 200
+        org_id = resp.json()["org_id"]
+
+        resp = client.get(f"/orgs/{org_id}")
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "Test Org"
+        assert len(resp.json()["members"]) == 1  # owner
+
+    def test_org_members(self, client):
+        resp = client.post("/orgs", json={"name": "Member Test", "owner_id": "owner"})
+        org_id = resp.json()["org_id"]
+
+        resp = client.post(f"/orgs/{org_id}/members", json={"user_id": "user2", "role": "member"})
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "added"
+
+        resp = client.get(f"/orgs/{org_id}")
+        assert len(resp.json()["members"]) == 2
+
+    # Live streaming
+    def test_stream_upload_chunk(self, client):
+        import numpy as np, soundfile as sf, tempfile
+        from pathlib import Path
+        sr = 16000
+        audio = np.sin(2 * np.pi * 440 * np.linspace(0, 1, sr)).astype(np.float32)
+        path = Path(tempfile.mktemp(suffix='.wav'))
+        try:
+            sf.write(str(path), audio, sr)
+            with open(path, 'rb') as f:
+                resp = client.post("/stream/upload-chunk?modality=audio", files={"file": ("chunk.wav", f, "audio/wav")})
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "session_id" in data
+            assert "analysis" in data
+        finally:
+            path.unlink(missing_ok=True)

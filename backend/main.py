@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.db.database import engine, Base
 from backend.db import models, models_advanced  # noqa: F401 — register tables for create_all
-from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases, advanced
+from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases, advanced, streaming, workspaces
 from backend.services.model_loader import load_all_models
 
 # Load environment variables
@@ -64,6 +64,8 @@ app.include_router(stretch.router, prefix="/stretch", tags=["Stretch Features"])
 app.include_router(investigations.router)
 app.include_router(cases.router)
 app.include_router(advanced.router)
+app.include_router(streaming.router)
+app.include_router(workspaces.router)
 
 
 @app.get("/", tags=["Health"])
@@ -90,3 +92,49 @@ async def performance():
 async def features():
     from backend.config import flags
     return {k: getattr(flags, k) for k in dir(flags) if not k.startswith("_")}
+
+
+# --- Public API Key Management ---
+from pydantic import BaseModel as _BaseModel
+
+class APIKeyCreate(_BaseModel):
+    name: str
+    org_id: str | None = None
+    rate_limit: int = 100
+
+
+@app.post("/api-keys", tags=["Public API"])
+@limiter.exempt
+async def create_key(body: APIKeyCreate):
+    """Create a new API key for public API access."""
+    from backend.services.apikey_service import create_api_key
+    return await create_api_key(body.name, body.org_id, body.rate_limit)
+
+
+@app.get("/api-keys", tags=["Public API"])
+@limiter.exempt
+async def list_keys(org_id: str | None = None):
+    """List API keys."""
+    from backend.services.apikey_service import list_api_keys
+    return await list_api_keys(org_id)
+
+
+@app.delete("/api-keys/{key_id}", tags=["Public API"])
+@limiter.exempt
+async def revoke_key(key_id: str):
+    """Revoke an API key."""
+    from backend.services.apikey_service import revoke_api_key
+    return await revoke_api_key(key_id)
+
+
+# --- Multilingual NLP ---
+@app.post("/predict/text/multilingual", tags=["NLP"])
+@limiter.exempt
+async def predict_multilingual(text: str = None, body: dict | None = None):
+    """Multilingual text prediction — auto-detects English/Hindi/Hinglish."""
+    from backend.services.language_router import multilingual_nlp
+    if body and "text" in body:
+        text = body["text"]
+    if not text:
+        return {"error": "text required"}
+    return multilingual_nlp.predict(text)
