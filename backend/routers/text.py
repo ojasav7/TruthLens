@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from backend.schemas import PredictionResponse
 from backend.services.model_loader import get_nlp_model
 
 router = APIRouter()
@@ -11,11 +12,6 @@ router = APIRouter()
 class TextRequest(BaseModel):
     text: str
     top_k: int = 10
-
-
-class PredictionResponse(BaseModel):
-    label: str
-    confidence: float
 
 
 class ExplainResponse(BaseModel):

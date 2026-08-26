@@ -6,14 +6,10 @@ from pathlib import Path
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
+from backend.schemas import PredictionResponse
 from backend.services.model_loader import get_audio_model
 
 router = APIRouter()
-
-
-class PredictionResponse(BaseModel):
-    label: str
-    confidence: float
 
 
 class ExplanationResponse(BaseModel):
