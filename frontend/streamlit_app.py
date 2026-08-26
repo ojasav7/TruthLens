@@ -4,12 +4,13 @@ Streamlit frontend for multimodal misinformation detection.
 """
 
 import io
+import os
 import requests
 import streamlit as st
 import plotly.graph_objects as go
 from PIL import Image
 
-API_URL = st.getenv("API_URL", "http://localhost:8000")
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="TruthLens", page_icon="🔍", layout="wide")
 
