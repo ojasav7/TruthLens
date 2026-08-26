@@ -69,6 +69,7 @@ class TestAnalyzeEndpoint:
         assert "id" in data
         assert "threat_score" in data
         assert "verdict" in data
+        assert "consistency" in data
         assert data["verdict"] in ("Low", "Review Needed", "High Risk")
 
     def test_no_input_rejected(self, client):
@@ -92,7 +93,64 @@ class TestAnalyzeEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert "threat_score" in data
+        assert "consistency" in data
         assert "image" in data.get("breakdown", {})
+
+    def test_text_image_combo(self, client):
+        """Test text + image fusion."""
+        import io
+        from PIL import Image
+
+        img = Image.new("RGB", (64, 64), (128, 128, 128))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+
+        resp = client.post(
+            "/analyze",
+            data={"text": "Breaking: major discovery announced"},
+            files={"image": ("test.png", buf, "image/png")},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "threat_score" in data
+        assert "text" in data.get("breakdown", {})
+        assert "image" in data.get("breakdown", {})
+
+    def test_text_video_combo(self, client):
+        """Test text + video fusion."""
+        import cv2
+        import numpy as np
+        import tempfile
+
+        tmp = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(tmp.name, fourcc, 10, (64, 64))
+        for _ in range(10):
+            writer.write(np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8))
+        writer.release()
+
+        with open(tmp.name, 'rb') as f:
+            resp = client.post(
+                "/analyze",
+                data={"text": "Suspicious video circulating online"},
+                files={"video": ("test.mp4", f, "video/mp4")},
+            )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "threat_score" in data
+        assert "text" in data.get("breakdown", {})
+        assert "video" in data.get("breakdown", {})
+
+    def test_fusion_consistency(self, client):
+        """Verify consistency field is present in all responses."""
+        resp = client.post(
+            "/analyze",
+            data={"text": "Another test"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["consistency"] in ("unanimous", "mixed")
 
 
 class TestVideoEndpoint:

@@ -23,6 +23,7 @@ class AnalysisResponse(BaseModel):
     timestamp: str
     threat_score: float
     verdict: str
+    consistency: str
     breakdown: dict
 
 
@@ -121,6 +122,7 @@ async def analyze(
         timestamp=timestamp.isoformat(),
         threat_score=fused["threat_score"],
         verdict=fused["verdict"],
+        consistency=fused.get("consistency", "unanimous"),
         breakdown=fused["breakdown"],
     )
 
