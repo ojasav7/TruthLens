@@ -6,9 +6,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, File, Form, UploadFile, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from backend.db.database import async_session
 from backend.db.models import Analysis
@@ -16,6 +18,7 @@ from backend.services.model_loader import get_nlp_model, get_image_model, get_vi
 from models.fusion.fuse import fuse
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 class AnalysisResponse(BaseModel):
@@ -28,7 +31,8 @@ class AnalysisResponse(BaseModel):
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze(
+@limiter.limit("30/minute")
+async def analyze(request: Request,
     text: str | None = Form(None),
     image: UploadFile | None = File(None),
     video: UploadFile | None = File(None),

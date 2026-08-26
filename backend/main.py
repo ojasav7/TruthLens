@@ -7,6 +7,9 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from backend.db.database import engine, Base
 from backend.routers import text, image, video, audio, analyze, stretch
@@ -30,12 +33,16 @@ async def lifespan(app: FastAPI):
     print("[Shutdown] TruthLens stopped.")
 
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="TruthLens API",
     description="AI Multimodal Misinformation & Threat Detection Platform",
     version="0.1.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS — allow Streamlit frontend
 app.add_middleware(
@@ -56,10 +63,12 @@ app.include_router(stretch.router, prefix="/stretch", tags=["Stretch Features"])
 
 
 @app.get("/", tags=["Health"])
+@limiter.exempt
 async def root():
     return {"status": "ok", "service": "TruthLens API", "version": "0.1.0"}
 
 
 @app.get("/health", tags=["Health"])
+@limiter.exempt
 async def health():
     return {"status": "healthy"}

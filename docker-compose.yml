@@ -1,33 +1,37 @@
-version: "3.9"
+version: "3.8"
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./truthlens.db
+      - MODEL_DIR=./models
     volumes:
-      - ./models:/app/models
+      - model-weights:/app/models
+      - db-data:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 60s
 
   frontend:
-    image: python:3.11-slim
+    image: python:3.12-slim
     working_dir: /app
     command: >
-      bash -c "pip install streamlit requests &&
-               streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
+      bash -c "pip install --no-cache-dir streamlit plotly requests &&
+               streamlit run frontend/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true"
     ports:
       - "8501:8501"
-    volumes:
-      - ./frontend:/app
     environment:
       - API_URL=http://backend:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
+volumes:
+  model-weights:
+  db-data:
