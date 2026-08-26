@@ -132,15 +132,32 @@ async def analyze(request: Request,
 
 
 @router.get("/analyses")
-async def list_analyses(limit: int = 20):
-    """List recent analyses."""
+async def list_analyses(
+    limit: int = 20,
+    verdict: str | None = None,
+    min_risk: float | None = None,
+    max_risk: float | None = None,
+    input_type: str | None = None,
+):
+    """List recent analyses with optional filters."""
     async with async_session() as session:
         from sqlalchemy import select, desc
 
-        result = await session.execute(
-            select(Analysis).order_by(desc(Analysis.timestamp)).limit(limit)
-        )
+        query = select(Analysis).order_by(desc(Analysis.timestamp)).limit(limit)
+        if verdict:
+            query = query.where(Analysis.verdict == verdict)
+        if min_risk is not None:
+            query = query.where(Analysis.threat_score >= min_risk)
+        if max_risk is not None:
+            query = query.where(Analysis.threat_score <= max_risk)
+
+        result = await session.execute(query)
         rows = result.scalars().all()
+
+        # Filter by input_type in Python (JSON array contains)
+        if input_type:
+            rows = [r for r in rows if input_type in (r.input_types or [])]
+
         return [
             {
                 "id": r.id,

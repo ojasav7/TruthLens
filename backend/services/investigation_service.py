@@ -2,8 +2,9 @@
 
 from backend.db.database import async_session
 from backend.db.models import Analysis
-from backend.db.models_advanced import InvestigationCase, Evidence, AuditEvent, ModelVersion
+from backend.db.models_advanced import InvestigationCase, Evidence, AuditEvent, ModelVersion, MediaFingerprint, EvidenceRelation
 from backend.services.evidence_engine import EvidenceEngine
+from backend.services.prioritization_service import calculate_priority
 
 MODEL_VERSIONS = {"nlp": "1.0.0", "image": "1.0.0", "video": "1.0.0", "audio": "1.0.0", "fusion": "1.0.0"}
 
@@ -20,11 +21,24 @@ class InvestigationService:
             if not analysis:
                 return {"error": "Analysis not found"}
 
+            # Collect evidence first (needed for prioritization)
+            evidence_records = self.evidence_engine.collect_from_analysis({"breakdown": analysis.breakdown})
+
+            # Calculate consistency from breakdown
+            breakdown = analysis.breakdown or {}
+            labels = set()
+            for mod in ["text", "image", "video", "audio"]:
+                if mod in breakdown and isinstance(breakdown[mod], dict):
+                    labels.add(breakdown[mod].get("label"))
+            consistency = "unanimous" if len(labels) <= 1 else "mixed"
+            priority = calculate_priority(analysis.threat_score, evidence=evidence_records, consistency=consistency)
+
             case = InvestigationCase(
                 title=f"Investigation for {analysis_id[:8]}",
                 analysis_ids=[analysis_id],
                 final_verdict=analysis.verdict,
                 final_risk_score=analysis.threat_score,
+                priority=priority,
             )
             session.add(case)
             await session.flush()
@@ -32,14 +46,13 @@ class InvestigationService:
             for modality, version in MODEL_VERSIONS.items():
                 session.add(ModelVersion(analysis_id=analysis_id, modality=modality, version=version))
 
-            evidence_records = self.evidence_engine.collect_from_analysis({"breakdown": analysis.breakdown})
             for ev_data in evidence_records:
                 session.add(Evidence(case_id=case.id, analysis_id=analysis_id, **ev_data))
 
-            session.add(AuditEvent(case_id=case.id, event_type="CASE_CREATED", details={"analysis_id": analysis_id}))
+            session.add(AuditEvent(case_id=case.id, event_type="CASE_CREATED", details={"analysis_id": analysis_id, "priority": priority}))
             await session.commit()
 
-            return {"case_id": case.id, "status": case.status, "verdict": case.final_verdict, "risk_score": case.final_risk_score, "evidence_count": len(evidence_records)}
+            return {"case_id": case.id, "status": case.status, "verdict": case.final_verdict, "risk_score": case.final_risk_score, "priority": priority, "consistency": consistency, "evidence_count": len(evidence_records)}
 
     async def get_investigation(self, case_id: str) -> dict:
         async with async_session() as session:

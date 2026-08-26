@@ -89,3 +89,31 @@ class FeedbackRecord(Base):
     review_reason = Column(Text, nullable=True)
     review_timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     model_version = Column(String(20), nullable=False)
+
+
+class MediaFingerprint(Base):
+    """Unique identity for uploaded content."""
+    __tablename__ = "media_fingerprints"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    media_id = Column(String(30), unique=True, nullable=False)  # TL-M-XXXX-XXXX
+    sha256 = Column(String(64), nullable=False)
+    file_size = Column(Float, nullable=True)
+    file_type = Column(String(50), nullable=True)
+    filename = Column(String(200), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    analysis_id = Column(String(36), ForeignKey("analyses.id"), nullable=True)
+    metadata_json = Column(JSON, default=dict)
+
+
+class EvidenceRelation(Base):
+    """Graph edges connecting evidence nodes."""
+    __tablename__ = "evidence_relations"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String(36), ForeignKey("investigation_cases.id"), nullable=False)
+    source_evidence_id = Column(String(36), nullable=False)  # from evidence.id or node type
+    target_evidence_id = Column(String(36), nullable=False)
+    relation_type = Column(String(50), nullable=False)  # SUPPORTS, CONTRADICTS, PRODUCED_BY, etc.
+    metadata_json = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

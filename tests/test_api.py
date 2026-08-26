@@ -435,3 +435,118 @@ class TestResearchEndpoints:
         assert "INVESTIGATION_MODE" in data
         assert "CONTRADICTION_ENGINE" in data
         assert all(isinstance(v, bool) for v in data.values())
+
+
+class TestAdvancedFeatures:
+    # #27 Media Fingerprint
+    def test_fingerprint(self, client):
+        import io
+        from PIL import Image
+        img = Image.new("RGB", (32, 32), (100, 100, 100))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        resp = client.post("/advanced/fingerprint", files={"file": ("test.png", buf, "image/png")})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "media_id" in data
+        assert data["media_id"].startswith("TL-M-")
+        assert "sha256" in data
+
+    # #28 History filters
+    def test_analyses_filters(self, client):
+        resp = client.get("/analyses?limit=5&verdict=Low")
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    def test_cases_filters(self, client):
+        resp = client.get("/cases?limit=5&priority=MEDIUM")
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    # #19 Evidence Graph
+    def test_evidence_graph(self, client):
+        resp = client.post("/analyze", data={"text": "Graph test"})
+        analysis_id = resp.json()["id"]
+        resp = client.post(f"/investigations/{analysis_id}")
+        case_id = resp.json()["case_id"]
+        resp = client.get(f"/advanced/graph/{case_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "nodes" in data
+        assert "edges" in data
+        assert data["node_count"] > 0
+
+    # #46 Auto-prioritization
+    def test_investigation_has_priority(self, client):
+        resp = client.post("/analyze", data={"text": "Priority test"})
+        analysis_id = resp.json()["id"]
+        resp = client.post(f"/investigations/{analysis_id}")
+        data = resp.json()
+        assert "priority" in data
+        assert data["priority"] in ("LOW", "MEDIUM", "HIGH", "CRITICAL")
+
+    # #35 Robustness Lab
+    def test_robustness_lab(self, client):
+        import io
+        from PIL import Image
+        img = Image.new("RGB", (64, 64), (128, 128, 128))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        resp = client.post("/advanced/robustness", files={"file": ("test.png", buf, "image/png")})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "robustness_score" in data
+        assert "transformations" in data
+        assert "original_label" in data
+
+    # #36 Model Benchmark
+    def test_benchmarks(self, client):
+        resp = client.get("/advanced/benchmarks")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "nlp" in data or "image" in data
+
+    def test_model_versions(self, client):
+        resp = client.get("/advanced/models/versions")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "nlp" in data
+        assert data["nlp"]["version"] == "1.0.0"
+
+    # #38 Confidence Calibration
+    def test_calibration(self, client):
+        resp = client.get("/advanced/calibration")
+        assert resp.status_code == 200
+        assert "buckets" in resp.json()
+
+    # #39 Misinformation Radar
+    def test_radar(self, client):
+        resp = client.get("/advanced/radar")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "total_analyses" in data
+        assert "risk_distribution" in data
+        assert data["total_analyses"] > 0
+
+    # #58 Explain Like I'm Human
+    def test_explain_human(self, client):
+        resp = client.post("/analyze", data={"text": "Human explain test"})
+        analysis_id = resp.json()["id"]
+        resp = client.post(f"/investigations/{analysis_id}")
+        case_id = resp.json()["case_id"]
+        resp = client.get(f"/advanced/explain-human/{case_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "plain_english_summary" in data
+        assert "plain_english_reasons" in data
+        assert "technical_available" in data
+
+    # #33 Source Credibility (via stretch)
+    def test_credibility_endpoint(self, client):
+        resp = client.post("/stretch/credibility", json={"url": "https://reuters.com"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["credibility"] == "high"
+        assert data["risk_score"] < 0.5

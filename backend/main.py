@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.db.database import engine, Base
 from backend.db import models, models_advanced  # noqa: F401 — register tables for create_all
-from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases
+from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases, advanced
 from backend.services.model_loader import load_all_models
 
 # Load environment variables
@@ -63,6 +63,7 @@ app.include_router(analyze.router, tags=["Fusion"])
 app.include_router(stretch.router, prefix="/stretch", tags=["Stretch Features"])
 app.include_router(investigations.router)
 app.include_router(cases.router)
+app.include_router(advanced.router)
 
 
 @app.get("/", tags=["Health"])

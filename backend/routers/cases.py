@@ -27,6 +27,9 @@ class ReviewSubmit(BaseModel):
 async def list_cases(
     status: str | None = Query(None),
     priority: str | None = Query(None),
+    verdict: str | None = Query(None),
+    min_risk: float | None = Query(None),
+    max_risk: float | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
 ):
     """List investigation cases with optional filters."""
@@ -36,6 +39,12 @@ async def list_cases(
             query = query.where(InvestigationCase.status == status)
         if priority:
             query = query.where(InvestigationCase.priority == priority)
+        if verdict:
+            query = query.where(InvestigationCase.final_verdict == verdict)
+        if min_risk is not None:
+            query = query.where(InvestigationCase.final_risk_score >= min_risk)
+        if max_risk is not None:
+            query = query.where(InvestigationCase.final_risk_score <= max_risk)
         result = await session.execute(query)
         cases = result.scalars().all()
         return [
