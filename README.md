@@ -444,4 +444,41 @@ MIT — for educational purposes.
 
 ## Acknowledgments
 
+## Project Status
+
+| Phase | Name | Status |
+|-------|------|--------|
+| 0 | Setup | ✅ Complete |
+| 1 | NLP Model | ✅ Complete |
+| 2 | Image Model | ✅ Complete |
+| 3 | Video Model | ✅ Complete |
+| 4 | Audio Model | ✅ Complete |
+| 5 | Fusion + API | ✅ Complete |
+| 6 | Frontend | ✅ Complete |
+| 7 | Reports + XAI | ✅ Complete |
+| 8 | Stretch Features | ✅ Complete |
+| 9 | Hardening + Deploy | ✅ Complete |
+| 10 | Documentation | ✅ Complete |
+
+### Stretch Features
+
+| Feature | Endpoint | Description |
+|---------|----------|-------------|
+| OCR | `POST /stretch/ocr` | Extract text from images |
+| EXIF | `POST /stretch/exif` | Analyze image metadata |
+| Credibility | `POST /stretch/credibility` | Score URL credibility |
+
+---
+
+## Documentation
+
+| Document | Location |
+|----------|----------|
+| IEEE Report | `docs/IEEE_Report.md` |
+| Presentation | `docs/Presentation.md` (HTML) |
+| Poster Concept | `docs/Poster.md` |
+| Build Guide | `BUILD_GUIDE.md` |
+
+---
+
 Built with [HuggingFace Transformers](https://huggingface.co/docs/transformers/), [PyTorch](https://pytorch.org/), [FastAPI](https://fastapi.tiangolo.com/), [SHAP](https://shap.readthedocs.io/), [timm](https://github.com/huggingface/pytorch-image-models), and [Streamlit](https://streamlit.io/).
