@@ -41,17 +41,17 @@
 │  │  NLP: 100% acc  │  Image: 66% acc                  │   │
 │  │  Video: 100% acc │  Audio: 100% acc                 │   │
 │  │                                                     │   │
-│  │  16 API Endpoints │ 36 Tests Passing                │   │
-│  │  4 ML Models      │ 10 Phases Complete              │   │
+│  │  29 API Endpoints │ 49 Tests Passing                │   │
+│  │  4 ML Models      │ 16 Phases Complete              │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ EXPLAINABILITY│ │   FUSION     │  │   DEPLOY     │     │
+│  │ INVESTIGATION│  │  EXPLAINABILITY│ │   DEPLOY     │     │
 │  │              │  │              │  │              │     │
-│  │ SHAP tokens  │  │ Dynamic      │  │ Docker       │     │
-│  │ Grad-CAM     │  │ renormalize  │  │ FastAPI      │     │
-│  │ Frame import.│  │ Consistency  │  │ Streamlit    │     │
-│  │ Freq bands   │  │ Calibration  │  │ Rate limit   │     │
+│  │ Evidence     │  │ SHAP tokens  │  │ Docker       │     │
+│  │ Ledger       │  │ Grad-CAM     │  │ FastAPI      │     │
+│  │ Contradiction│  │ Frame import.│  │ Streamlit    │     │
+│  │ Case Mgmt    │  │ Freq bands   │  │ Rate limit   │     │
 │  └──────────────┘  └──────────────┘  └──────────────┘     │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │

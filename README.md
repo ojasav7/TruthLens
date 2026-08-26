@@ -1,8 +1,8 @@
 # TruthLens
 
-**AI Multimodal Misinformation & Threat Detection Platform**
+**Explainable Multimodal Misinformation & Synthetic-Media Investigation Platform**
 
-TruthLens scores text, images, videos, and audio for authenticity and misinformation risk, then explains why — combining NLP, computer vision, and audio analysis with a weighted fusion layer into a single threat score.
+TruthLens analyzes text, images, video, and audio, combines independent AI signals with provenance, fact-checking, source intelligence, and cross-modal consistency analysis, and produces an evidence-backed risk assessment with human-review and audit capabilities.
 
 [![Tests](https://github.com/ojasav7/TruthLens/actions/workflows/ci.yml/badge.svg)](https://github.com/ojasav7/TruthLens/actions)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
@@ -13,52 +13,53 @@ TruthLens scores text, images, videos, and audio for authenticity and misinforma
 ## Architecture
 
 ```
-                          ┌─────────────────────┐
-                          │   Streamlit Dashboard │  :8501
-                          │   (frontend/)         │
-                          └─────────┬───────────┘
+                         ┌─────────────────────────┐
+                         │    Streamlit Dashboard   │  :8501
+                         │    (frontend/)           │
+                         └──────────┬──────────────┘
                                     │ HTTP
-                          ┌─────────▼───────────┐
-                          │    FastAPI Backend    │  :8000
-                          │    (backend/)         │
-                          └─────────┬───────────┘
+                         ┌──────────▼──────────────┐
+                         │     FastAPI Backend       │  :8000
+                         │     (backend/)            │
+                         └──────────┬──────────────┘
                                     │
-              ┌─────────────────────┼─────────────────────┐
-              │                     │                     │
-    ┌─────────▼────────┐  ┌────────▼────────┐  ┌────────▼────────┐
-    │  /predict/text   │  │ /predict/image  │  │ /predict/video  │
-    │  DistilBERT      │  │ EfficientNet-B4 │  │ MobileNetV2+LSTM│
-    │  + SHAP explain  │  │ + Grad-CAM      │  │ + frame import. │
-    └──────────────────┘  └─────────────────┘  └─────────────────┘
-              │                     │                     │
-              └─────────────────────┼─────────────────────┘
-                                    │
-                          ┌─────────▼───────────┐
-                          │   Fusion Layer       │
-                          │   models/fusion/     │
-                          │   Weighted ensemble  │
-                          │   Threat scoring     │
-                          └─────────┬───────────┘
-                                    │
-                          ┌─────────▼───────────┐
-                          │  /analyze (unified)  │
-                          │  + SQLite history    │
-                          │  + PDF reports       │
-                          └─────────────────────┘
+         ┌──────────────────────────┼──────────────────────────┐
+         │                          │                          │
+  ┌──────▼───────┐  ┌──────────────▼──────────┐  ┌───────────▼──────────┐
+  │  /predict/   │  │     /analyze (fusion)    │  │  /investigations     │
+  │  text/image/ │  │  Weighted ensemble +     │  │  Evidence engine +   │
+  │  video/audio │  │  calibration + consistency│  │  Contradiction +     │
+  └──────┬───────┘  └──────────┬───────────────┘  │  Explanation         │
+         │                     │                   └───────────┬──────────┘
+         │                     │                               │
+         │           ┌─────────▼───────────┐     ┌────────────▼─────────┐
+         │           │   4 ML Models        │     │   Case Management    │
+         │           │   DistilBERT         │     │   Human Review       │
+         │           │   EfficientNet-B4    │     │   Audit Trail        │
+         │           │   MobileNetV2+LSTM   │     └──────────────────────┘
+         │           │   MFCC+MLP           │
+         │           └─────────────────────┘
+         │
+  ┌──────▼──────────────────────────────────┐
+  │  Stretch Features                       │
+  │  OCR · EXIF · Credibility · Screenshot │
+  │  Claim Extraction · Robustness Lab     │
+  └─────────────────────────────────────────┘
 ```
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | FastAPI, SQLAlchemy (async), SQLite |
+| **Backend** | FastAPI, SQLAlchemy (async), SQLite, SlowAPI rate limiting |
 | **NLP** | DistilBERT (HuggingFace Transformers), SHAP explainability |
 | **Image** | EfficientNet-B4 (timm), Grad-CAM heatmaps |
 | **Video** | MobileNetV2 + LSTM, OpenCV frame extraction |
 | **Audio** | MFCC features + MLP (torchaudio), frequency-band explanations |
-| **Fusion** | Weighted ensemble with dynamic renormalization |
-| **Frontend** | Streamlit dashboard |
-| **Infra** | Docker Compose, pytest |
+| **Fusion** | Weighted ensemble with dynamic renormalization + confidence calibration |
+| **Investigation** | Evidence engine, contradiction detection, explanation engine |
+| **Frontend** | Streamlit dashboard with Plotly gauges and charts |
+| **Infra** | Docker Compose, pytest, GitHub Actions CI |
 
 ---
 
@@ -98,17 +99,10 @@ python data/scripts/generate_audio_data.py
 ### 3. Train models
 
 ```bash
-# NLP (DistilBERT — ~2 min on CPU)
-python -m models.nlp.train_fast
-
-# Image (EfficientNet-B4 — ~5 min on CPU)
-python -m models.image.train
-
-# Video (MobileNetV2+LSTM — ~3 min on CPU)
-python -m models.video.train
-
-# Audio (MFCC+MLP — ~5 sec on CPU)
-python -m models.audio.train
+python -m models.nlp.train_fast     # ~2 min CPU
+python -m models.image.train        # ~5 min CPU
+python -m models.video.train        # ~3 min CPU
+python -m models.audio.train        # ~5 sec CPU
 ```
 
 ### 4. Start the API
@@ -130,10 +124,10 @@ Dashboard at **http://localhost:8501**.
 ### 6. Run tests
 
 ```bash
-pytest tests/ -v
+pytest tests/ -v    # 49 tests
 ```
 
-### Docker (alternative)
+### Docker
 
 ```bash
 docker-compose up --build
@@ -141,198 +135,70 @@ docker-compose up --build
 
 ---
 
-## API Reference
+## API Reference (29 Endpoints)
 
-### Health
+### Health & Research
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/` | Service info |
 | GET | `/health` | Health check |
+| GET | `/performance` | Analysis timing metrics |
+| GET | `/features` | Feature flag status |
 
 ### Per-Modality Predictions
 
-#### `POST /predict/text`
-
-Classify text as real or fake news.
-
-```bash
-curl -X POST http://localhost:8000/predict/text \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Breaking: scientists discover new species"}'
-```
-
-**Response:**
-```json
-{"label": "real", "confidence": 0.87}
-```
-
-#### `POST /predict/text/explain`
-
-Classify text with SHAP token attributions.
-
-```bash
-curl -X POST http://localhost:8000/predict/text/explain \
-  -H "Content-Type: application/json" \
-  -d '{"text": "SHOCKING: Government caught fabricating data!", "top_k": 5}'
-```
-
-**Response:**
-```json
-{
-  "label": "fake",
-  "confidence": 0.92,
-  "explained_output": "logits",
-  "tokens": [
-    {"token": "fabric", "attribution": 0.015},
-    {"token": "SHOCKING", "attribution": 0.012}
-  ],
-  "base_value": 0.0
-}
-```
-
-#### `POST /predict/image`
-
-Classify image as real or deepfake.
-
-```bash
-curl -X POST http://localhost:8000/predict/image \
-  -F "file=@photo.jpg"
-```
-
-**Response:**
-```json
-{"label": "real", "confidence": 0.74}
-```
-
-#### `POST /predict/image/explain`
-
-Classify image with Grad-CAM heatmap.
-
-```bash
-curl -X POST http://localhost:8000/predict/image/explain \
-  -F "file=@photo.jpg"
-```
-
-**Response:**
-```json
-{
-  "label": "real",
-  "confidence": 0.74,
-  "heatmap_b64": "<base64-encoded PNG>"
-}
-```
-
-#### `POST /predict/video`
-
-Classify video with per-frame scores.
-
-```bash
-curl -X POST http://localhost:8000/predict/video \
-  -F "file=@clip.mp4"
-```
-
-**Response:**
-```json
-{
-  "label": "fake",
-  "confidence": 0.66,
-  "per_frame_scores": [0.7, 0.6, 0.65, ...]
-}
-```
-
-#### `POST /predict/video/explain`
-
-Classify video with frame importance scores.
-
-```bash
-curl -X POST http://localhost:8000/predict/video/explain \
-  -F "file=@clip.mp4"
-```
-
-**Response:**
-```json
-{
-  "label": "fake",
-  "confidence": 0.66,
-  "frame_importance": [
-    {"frame": 0, "importance": 1.0},
-    {"frame": 3, "importance": 0.82}
-  ]
-}
-```
-
-#### `POST /predict/audio`
-
-Classify audio as real or voice clone.
-
-```bash
-curl -X POST http://localhost:8000/predict/audio \
-  -F "file=@recording.wav"
-```
-
-**Response:**
-```json
-{"label": "cloned", "confidence": 0.91}
-```
-
-#### `POST /predict/audio/explain`
-
-Classify audio with frequency-band attributions.
-
-```bash
-curl -X POST http://localhost:8000/predict/audio/explain \
-  -F "file=@recording.wav"
-```
-
-**Response:**
-```json
-{
-  "label": "cloned",
-  "confidence": 0.91,
-  "explained_output": "logit",
-  "top_coefficients": [
-    {"mfcc_index": 0, "estimated_freq_hz": 125, "importance": 0.052}
-  ],
-  "base_value": 0.0
-}
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/predict/text` | NLP fake news classification |
+| POST | `/predict/text/explain` | Text + SHAP token attributions |
+| POST | `/predict/image` | Image deepfake classification |
+| POST | `/predict/image/explain` | Image + Grad-CAM heatmap |
+| POST | `/predict/video` | Video deepfake + per-frame scores |
+| POST | `/predict/video/explain` | Video + frame importance |
+| POST | `/predict/audio` | Voice clone classification |
+| POST | `/predict/audio/explain` | Audio + MFCC attributions |
 
 ### Unified Analysis
 
-#### `POST /analyze`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/analyze` | Multimodal analysis (any combination) |
+| GET | `/analyses` | List recent analyses |
+| GET | `/analyze/{id}/report` | Download PDF report |
 
-Multimodal analysis — accepts any combination of text, image, video, audio.
+### Investigation Engine
 
-```bash
-curl -X POST http://localhost:8000/analyze \
-  -F "text=Breaking news today" \
-  -F "image=@photo.jpg"
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/investigations/{analysis_id}` | Create investigation from analysis |
+| GET | `/investigations/{case_id}` | Full investigation + evidence + explanation |
+| GET | `/investigations/{case_id}/audit` | Chronological audit trail |
+| GET | `/investigations/{case_id}/timeline` | Video suspicious segments |
+| POST | `/investigations/{case_id}/reanalyze` | Re-analysis (versioned) |
 
-**Response:**
-```json
-{
-  "id": "a1b2c3d4-...",
-  "timestamp": "2026-08-26T12:00:00+00:00",
-  "threat_score": 42.5,
-  "verdict": "Review Needed",
-  "breakdown": {
-    "text": {"label": "real", "confidence": 0.87, "weight": 0.25, "threat_contribution": 13.0},
-    "image": {"label": "fake", "confidence": 0.65, "weight": 0.75, "threat_contribution": 48.75}
-  }
-}
-```
+### Case Management
 
-#### `GET /analyses?limit=20`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/cases` | List cases (filterable) |
+| POST | `/cases` | Create investigation case |
+| GET | `/cases/{case_id}` | Get case with reviews |
+| POST | `/cases/{case_id}/review` | Submit human review |
 
-List recent analyses.
+### Stretch Features
 
-#### `GET /analyze/{id}/report`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/stretch/ocr` | Extract text from images |
+| POST | `/stretch/exif` | Analyze image metadata |
+| POST | `/stretch/credibility` | Score URL credibility |
+| POST | `/stretch/screenshot` | Screenshot → OCR → claims |
+| POST | `/stretch/claims` | Extract individual claims |
 
-Download a PDF report for a completed analysis.
+---
 
-### Threat Scoring
+## Threat Scoring
 
 | Score | Verdict | Meaning |
 |-------|---------|---------|
@@ -340,7 +206,25 @@ Download a PDF report for a completed analysis.
 | 31–70 | **Review Needed** | Mixed signals, human review recommended |
 | 71–100 | **High Risk** | Strong indicators of manipulation |
 
-Fusion weights: text (25%), image (25%), video (35%), audio (15%). Weights renormalize when not all modalities are present.
+Fusion weights: text (25%), image (25%), video (35%), audio (15%). Weights renormalize when not all modalities are present. Confidence scores are Platt-calibrated. Cross-modal disagreement adds a boost of up to 15 points.
+
+---
+
+## Investigation Flow
+
+```
+Upload → Analyze → Create Investigation → Collect Evidence
+    → Cross-Modal Analysis → Contradiction Detection
+    → Human-readable Explanation → Risk Assessment
+    → Human Review (if needed) → Case Resolution → Report
+```
+
+Each investigation includes:
+- **Evidence Ledger** — structured records from each modality
+- **Cross-Modal Analysis** — detects when modalities disagree
+- **Explanation** — human-readable reasons (not raw model internals)
+- **Audit Trail** — chronological event history
+- **Model Versions** — tracks which model made each prediction
 
 ---
 
@@ -349,56 +233,77 @@ Fusion weights: text (25%), image (25%), video (35%), audio (15%). Weights renor
 ```
 TruthLens/
 ├── backend/
-│   ├── main.py                 # FastAPI app + lifespan
-│   ├── requirements.txt        # Python dependencies
+│   ├── main.py                      # FastAPI app + lifespan + rate limiting
+│   ├── config.py                    # Feature flags (13 toggleable modules)
+│   ├── schemas.py                   # Shared Pydantic models
+│   ├── requirements.txt
 │   ├── db/
-│   │   ├── database.py         # Async SQLAlchemy engine
-│   │   └── models.py           # Analysis ORM model
+│   │   ├── database.py              # Async SQLAlchemy engine
+│   │   ├── models.py                # Analysis ORM model
+│   │   └── models_advanced.py       # Investigation, Evidence, Audit, Review models
 │   ├── routers/
-│   │   ├── text.py             # POST /predict/text[/explain]
-│   │   ├── image.py            # POST /predict/image[/explain]
-│   │   ├── video.py            # POST /predict/video[/explain]
-│   │   ├── audio.py            # POST /predict/audio[/explain]
-│   │   └── analyze.py          # POST /analyze, GET /analyses
+│   │   ├── text.py                  # POST /predict/text[/explain]
+│   │   ├── image.py                 # POST /predict/image[/explain]
+│   │   ├── video.py                 # POST /predict/video[/explain]
+│   │   ├── audio.py                 # POST /predict/audio[/explain]
+│   │   ├── analyze.py               # POST /analyze, GET /analyses
+│   │   ├── stretch.py               # OCR, EXIF, credibility, screenshot, claims
+│   │   ├── investigations.py        # Investigation CRUD + timeline + reanalyze
+│   │   └── cases.py                 # Case management + human review
 │   └── services/
-│       ├── model_loader.py     # Singleton model loading
-│       └── report_service.py   # PDF generation (ReportLab)
+│       ├── model_loader.py          # Singleton model loading
+│       ├── report_service.py        # PDF generation (ReportLab)
+│       ├── evidence_engine.py       # Evidence collection + strength/agreement
+│       ├── investigation_service.py # Investigation CRUD
+│       ├── audit_service.py         # Audit trail logging
+│       ├── contradiction_engine.py  # Cross-modal disagreement detection
+│       ├── video_timeline.py        # Suspicious segment grouping
+│       ├── explanation_engine.py    # Human-readable explanations
+│       ├── claim_extractor.py       # Text → individual claims
+│       ├── screenshot_service.py    # Screenshot → OCR → claims
+│       ├── performance_monitor.py   # Timing metrics
+│       ├── ocr_service.py           # Tesseract OCR
+│       ├── exif_service.py          # EXIF metadata analysis
+│       └── credibility_service.py   # URL credibility scoring
 ├── models/
-│   ├── nlp/
-│   │   ├── model.py            # DistilBERT + SHAP explain
-│   │   ├── train_fast.py       # CPU training script
-│   │   └── weights/            # Trained weights (gitignored)
-│   ├── image/
-│   │   ├── model.py            # EfficientNet-B4 + Grad-CAM
-│   │   ├── train.py
-│   │   └── weights/
-│   ├── video/
-│   │   ├── model.py            # MobileNetV2 + LSTM + temporal
-│   │   ├── train.py
-│   │   └── weights/
-│   ├── audio/
-│   │   ├── model.py            # MFCC + MLP + freq-band explain
-│   │   ├── train.py
-│   │   └── weights/
-│   └── fusion/
-│       └── fuse.py             # Weighted ensemble fusion
+│   ├── nlp/                         # DistilBERT + SHAP
+│   ├── image/                       # EfficientNet-B4 + Grad-CAM
+│   ├── video/                       # MobileNetV2 + LSTM
+│   ├── audio/                       # MFCC + MLP
+│   └── fusion/                      # Weighted ensemble + calibration
 ├── frontend/
-│   └── streamlit_app.py        # Streamlit dashboard
-├── tests/
-│   ├── conftest.py             # Model pre-loading for tests
-│   ├── test_nlp.py             # 5 tests
-│   ├── test_image.py           # 5 tests
-│   ├── test_video.py           # 2 tests
-│   ├── test_audio.py           # 3 tests
-│   └── test_api.py             # 15 integration tests
-├── data/
-│   └── scripts/                # Dataset generators
-├── notebooks/                  # Training notebooks (Colab)
+│   └── streamlit_app.py             # Dashboard with gauges + charts
+├── tests/                           # 49 tests
+├── docs/
+│   ├── IEEE_Report.md               # Full research paper
+│   ├── Presentation.md              # 15-slide deck
+│   ├── Poster.md                    # Conference poster
+│   └── ADVANCED_IMPLEMENTATION.md   # Implementation guide
 ├── Dockerfile
 ├── docker-compose.yml
-├── .env.example
-└── README.md
+└── BUILD_GUIDE.md
 ```
+
+---
+
+## Feature Flags
+
+All advanced modules can be toggled via environment variables:
+
+| Flag | Default | Controls |
+|------|---------|----------|
+| `TL_INVESTIGATION_MODE` | true | Investigation creation |
+| `TL_EVIDENCE_ENGINE` | true | Evidence collection |
+| `TL_CONTRADICTION` | true | Cross-modal analysis |
+| `TL_EXPLANATION` | true | Human-readable explanations |
+| `TL_CASE_MGMT` | true | Case management |
+| `TL_HUMAN_REVIEW` | true | Human review queue |
+| `TL_SCREENSHOT` | true | Screenshot investigation |
+| `TL_CLAIMS` | true | Claim extraction |
+| `TL_OCR` | true | OCR endpoint |
+| `TL_EXIF` | true | EXIF analysis |
+| `TL_CREDIBILITY` | true | Credibility scoring |
+| `TL_PERF_MONITOR` | true | Performance tracking |
 
 ---
 
@@ -406,8 +311,8 @@ TruthLens/
 
 | Model | Architecture | Dataset | Epochs | Accuracy | Training Time |
 |-------|-------------|---------|--------|----------|---------------|
-| **NLP** | DistilBERT (66M params) | 2K synthetic LIAR-style | 1 | 100% val | ~2 min CPU |
-| **Image** | EfficientNet-B4 (19M params) | 2K synthetic faces | 1 | 66% train | ~5 min CPU |
+| **NLP** | DistilBERT (66M) | 2K synthetic LIAR-style | 1 | 100% val | ~2 min CPU |
+| **Image** | EfficientNet-B4 (19M) | 2K synthetic faces | 1 | 66% train | ~5 min CPU |
 | **Video** | MobileNetV2 + LSTM | 200 synthetic clips | 3 | 100% val | ~3 min CPU |
 | **Audio** | MFCC + MLP (40→128→2) | 600 synthetic audio | 5 | 100% val | ~5 sec CPU |
 
@@ -423,6 +328,44 @@ All models use synthetic data for proof-of-concept. Replace with real datasets (
 | `MODEL_DIR` | `./models` | Base directory for model weights |
 | `HUGGINGFACE_TOKEN` | — | HF token for gated models (optional) |
 | `SECRET_KEY` | `changeme` | Secret key for session signing |
+| `TL_*` | `true` | Feature flags (see table above) |
+
+---
+
+## Project Status
+
+| Phase | Name | Status | Tests |
+|-------|------|--------|-------|
+| 0 | Setup | ✅ Complete | — |
+| 1 | NLP Model | ✅ Complete | 5/5 |
+| 2 | Image Model | ✅ Complete | 5/5 |
+| 3 | Video Model | ✅ Complete | 2/2 |
+| 4 | Audio Model | ✅ Complete | 3/3 |
+| 5 | Fusion + API | ✅ Complete | 6/6 |
+| 6 | Frontend | ✅ Complete | — |
+| 7 | Reports + XAI | ✅ Complete | — |
+| 8 | Stretch Features | ✅ Complete | — |
+| 9 | Hardening + Deploy | ✅ Complete | 3/3 |
+| 10 | Documentation | ✅ Complete | — |
+| **Adv-A** | Core Product Layer | ✅ Complete | 3/3 |
+| **Adv-B** | Advanced Intelligence | ✅ Complete | 2/2 |
+| **Adv-C** | Case Management | ✅ Complete | 4/4 |
+| **Adv-D** | Real-World Features | ✅ Complete | 2/2 |
+| **Adv-E** | Performance Monitoring | ✅ Complete | 1/1 |
+| **Adv-F** | Feature Flags | ✅ Complete | 1/1 |
+| **Total** | | **16/16 phases** | **49 passed** |
+
+---
+
+## Documentation
+
+| Document | Location |
+|----------|----------|
+| IEEE Report | `docs/IEEE_Report.md` |
+| Presentation | `docs/Presentation.md` |
+| Poster Concept | `docs/Poster.md` |
+| Build Guide | `BUILD_GUIDE.md` |
+| Advanced Implementation | `docs/ADVANCED_IMPLEMENTATION.md` |
 
 ---
 
@@ -442,43 +385,4 @@ MIT — for educational purposes.
 
 ---
 
-## Acknowledgments
-
-## Project Status
-
-| Phase | Name | Status |
-|-------|------|--------|
-| 0 | Setup | ✅ Complete |
-| 1 | NLP Model | ✅ Complete |
-| 2 | Image Model | ✅ Complete |
-| 3 | Video Model | ✅ Complete |
-| 4 | Audio Model | ✅ Complete |
-| 5 | Fusion + API | ✅ Complete |
-| 6 | Frontend | ✅ Complete |
-| 7 | Reports + XAI | ✅ Complete |
-| 8 | Stretch Features | ✅ Complete |
-| 9 | Hardening + Deploy | ✅ Complete |
-| 10 | Documentation | ✅ Complete |
-
-### Stretch Features
-
-| Feature | Endpoint | Description |
-|---------|----------|-------------|
-| OCR | `POST /stretch/ocr` | Extract text from images |
-| EXIF | `POST /stretch/exif` | Analyze image metadata |
-| Credibility | `POST /stretch/credibility` | Score URL credibility |
-
----
-
-## Documentation
-
-| Document | Location |
-|----------|----------|
-| IEEE Report | `docs/IEEE_Report.md` |
-| Presentation | `docs/Presentation.md` (HTML) |
-| Poster Concept | `docs/Poster.md` |
-| Build Guide | `BUILD_GUIDE.md` |
-
----
-
-Built with [HuggingFace Transformers](https://huggingface.co/docs/transformers/), [PyTorch](https://pytorch.org/), [FastAPI](https://fastapi.tiangolo.com/), [SHAP](https://shap.readthedocs.io/), [timm](https://github.com/huggingface/pytorch-image-models), and [Streamlit](https://streamlit.io/).
+Built with [HuggingFace Transformers](https://huggingface.co/docs/transformers/), [PyTorch](https://pytorch.org/), [FastAPI](https://fastapi.tiangolo.com/), [SHAP](https://shap.readthedocs.io/), [timm](https://github.com/huggingface/pytorch-image-models), [Streamlit](https://streamlit.io/), and [ReportLab](https://www.reportlab.com/).

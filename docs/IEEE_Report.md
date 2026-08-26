@@ -8,7 +8,7 @@
 
 ## Abstract
 
-The proliferation of misinformation across text, images, videos, and audio poses a significant threat to public trust and information integrity. This paper presents TruthLens, a multimodal AI platform that detects and scores content for authenticity risk across four modalities: text (fake news), images (deepfakes), video (temporal deepfakes), and audio (voice clones). The system employs modality-specific deep learning models—DistilBERT for NLP, EfficientNet-B4 for image analysis, MobileNetV2 with LSTM for video temporal analysis, and MFCC-based MLP for audio classification—fused through a weighted ensemble layer with dynamic renormalization. Each modality includes explainability mechanisms: SHAP token attributions for text, Grad-CAM heatmaps for images, gradient-based frame importance for video, and frequency-band analysis for audio. The platform achieves 100% accuracy on synthetic benchmarks and provides a unified threat score (0–100) with three risk tiers. Additional capabilities include OCR text extraction, EXIF metadata analysis, and source credibility scoring. The system is deployed as a FastAPI backend with a Streamlit dashboard, containerized via Docker, and includes rate limiting for production hardening.
+The proliferation of misinformation across text, images, videos, and audio poses a significant threat to public trust and information integrity. This paper presents TruthLens, an explainable multimodal misinformation and synthetic-media investigation platform that analyzes text, images, video, and audio, combines independent AI signals with provenance, fact-checking, source intelligence, and cross-modal consistency analysis, and produces an evidence-backed risk assessment with human-review and audit capabilities. The system employs modality-specific deep learning models—DistilBERT for NLP, EfficientNet-B4 for image analysis, MobileNetV2 with LSTM for video temporal analysis, and MFCC-based MLP for audio classification—fused through a weighted ensemble layer with dynamic renormalization and Platt-style confidence calibration. Each modality includes explainability mechanisms: SHAP token attributions for text, Grad-CAM heatmaps for images, gradient-based frame importance for video, and frequency-band analysis for audio. The platform achieves 100% accuracy on synthetic benchmarks and provides a unified threat score (0–100) with three risk tiers. Beyond simple detection, TruthLens features an investigation engine that transforms predictions into structured investigations with evidence ledgers, cross-modal contradiction detection, human-readable explanations, case management, human review queues, and audit trails. Additional capabilities include OCR text extraction, EXIF metadata analysis, source credibility scoring, screenshot investigation, and claim extraction. The system is deployed as a FastAPI backend with 29 API endpoints, a Streamlit dashboard, containerized via Docker, and includes rate limiting for production hardening.
 
 **Keywords:** misinformation detection, deepfake detection, multimodal fusion, explainable AI, DistilBERT, EfficientNet, voice clone detection
 
@@ -226,14 +226,34 @@ MFCC coefficient analysis reveals metallic artifacts in synthetic speech.
 Image predictions remain stable across JPEG recompression:
 - Q30, Q50, Q90: Same label, confidence swing < 5%
 
-### 5.5 System Performance
+### 5.5 Investigation Engine
+
+The investigation engine transforms simple predictions into structured investigations:
+
+- **Evidence Collection:** Each modality's output is converted into structured evidence records with type, score, impact, and category (SUPPORTING/CONTRADICTING/NEUTRAL).
+- **Cross-Modal Analysis:** The contradiction engine detects when modalities disagree (e.g., text says "real" but image says "fake") and generates conflict signals.
+- **Evidence Strength:** Calculated as the average confidence across all evidence sources.
+- **Evidence Agreement:** Measures how consistently independent sources agree (0-100%).
+- **Human-Readable Explanations:** Technical signals are translated into understandable explanations without exposing raw model internals.
+
+### 5.6 Case Management
+
+Cases group multiple analyses into investigation units:
+- **Status Tracking:** OPEN → UNDER_REVIEW → RESOLVED/INCONCLUSIVE/ARCHIVED
+- **Human Review:** Reviewers can submit verdicts (AUTHENTIC, MANIPULATED, MISLEADING, INCONCLUSIVE) that never overwrite model predictions.
+- **Audit Trail:** Every event (case creation, evidence added, review submitted) is logged chronologically.
+
+### 5.7 System Performance
 
 | Metric | Value |
 |--------|-------|
 | API response time (text only) | ~500ms |
 | API response time (all 4 modalities) | ~3s |
 | PDF report generation | <1s |
+| Investigation creation | <200ms |
 | Rate limit | 30 req/min per IP |
+| Total API endpoints | 29 |
+| Total tests | 49 |
 
 ---
 
@@ -243,8 +263,10 @@ Image predictions remain stable across JPEG recompression:
 
 1. **Modularity:** Each modality operates independently, allowing graceful degradation
 2. **Explainability:** Every prediction includes interpretable explanations
-3. **Production-ready:** Docker, rate limiting, health checks, PDF reports
-4. **CPU-friendly:** All models run efficiently on CPU without GPU requirements
+3. **Investigation Engine:** Transforms simple predictions into structured investigations with evidence tracking
+4. **Non-Breaking Architecture:** Advanced features are purely additive — existing APIs and models are never modified
+5. **Production-ready:** Docker, rate limiting, health checks, PDF reports, 29 API endpoints
+6. **CPU-friendly:** All models run efficiently on CPU without GPU requirements
 
 ### 6.2 Limitations
 
@@ -252,6 +274,7 @@ Image predictions remain stable across JPEG recompression:
 2. **Single-label classification:** Binary fake/real labels don't capture nuanced categories (satire, opinion, manipulation)
 3. **Static credibility list:** Source credibility scoring uses a fixed domain list that requires manual updates
 4. **No temporal learning:** The system doesn't learn from user feedback or adapt to emerging misinformation patterns
+5. **No real provenance:** C2PA/provenance checks are stubbed — real implementation requires external API integration
 
 ### 6.3 Future Work
 
@@ -260,6 +283,8 @@ Image predictions remain stable across JPEG recompression:
 3. **Multilingual support:** Extend NLP pipeline to Hindi and other languages
 4. **C2PA integration:** Verify content provenance using C2PA signed manifests
 5. **Browser extension:** Real-time content verification during browsing
+6. **Evidence Graph:** Interactive visualization of evidence relationships
+7. **Re-analysis Pipeline:** Update investigations when new evidence becomes available
 
 ---
 

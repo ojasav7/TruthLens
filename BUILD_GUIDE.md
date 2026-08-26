@@ -412,18 +412,127 @@ If you are an AI agent (Claude Code, etc.) executing this file:
 | Method | Path | Purpose | Phase |
 |---|---|---|---|
 | POST | `/predict/text` | NLP-only fake news check | 1 |
+| POST | `/predict/text/explain` | Text + SHAP token attributions | 1 |
 | POST | `/predict/image` | Image-only deepfake check | 2 |
+| POST | `/predict/image/explain` | Image + Grad-CAM heatmap | 2 |
 | POST | `/predict/video` | Video-only deepfake check | 3 |
+| POST | `/predict/video/explain` | Video + frame importance | 3 |
 | POST | `/predict/audio` | Audio-only voice clone check | 4 |
+| POST | `/predict/audio/explain` | Audio + MFCC attributions | 4 |
 | POST | `/analyze` | Combined multimodal analysis | 5 |
 | GET | `/analyses` | History list | 6 |
 | GET | `/analyze/{id}/report` | Download PDF report | 7 |
-| POST | `/analyze/{id}/provenance` | C2PA check (stretch) | 8 |
-| POST | `/analyze/{id}/factcheck` | Claim-matching (stretch) | 8 |
+| POST | `/stretch/ocr` | OCR text extraction | 8 |
+| POST | `/stretch/exif` | EXIF metadata analysis | 8 |
+| POST | `/stretch/credibility` | URL credibility scoring | 8 |
+| POST | `/stretch/screenshot` | Screenshot → OCR → claims | Adv-D |
+| POST | `/stretch/claims` | Claim extraction | Adv-D |
+| POST | `/investigations/{id}` | Create investigation | Adv-A |
+| GET | `/investigations/{id}` | Full investigation + evidence | Adv-A |
+| GET | `/investigations/{id}/audit` | Audit trail | Adv-A |
+| GET | `/investigations/{id}/timeline` | Video timeline | Adv-B |
+| POST | `/investigations/{id}/reanalyze` | Re-analysis | Adv-B |
+| GET | `/cases` | List cases | Adv-C |
+| POST | `/cases` | Create case | Adv-C |
+| GET | `/cases/{id}` | Get case + reviews | Adv-C |
+| POST | `/cases/{id}/review` | Submit human review | Adv-C |
+| GET | `/performance` | Timing metrics | Adv-E |
+| GET | `/features` | Feature flags | Adv-F |
+| GET | `/` | Service info | 0 |
+| GET | `/health` | Health check | 0 |
 
 ---
 
-## 16. Scope for Future Extension (beyond submission)
+## 16. Advanced Implementation Stages
+
+### Stage A — Core Product Layer
+
+**Goal:** Every analysis becomes an investigation with evidence tracking.
+
+| Task | File | Status |
+|------|------|--------|
+| DB models (6 tables) | `backend/db/models_advanced.py` | ✅ |
+| Evidence Engine | `backend/services/evidence_engine.py` | ✅ |
+| Investigation Service | `backend/services/investigation_service.py` | ✅ |
+| Audit Service | `backend/services/audit_service.py` | ✅ |
+| Investigation Router | `backend/routers/investigations.py` | ✅ |
+
+**Definition of Done:**
+- [x] Existing `/analyze` still works
+- [x] Existing tests still pass
+- [x] Every analysis can create an investigation
+- [x] Evidence can be stored and queried
+- [x] Model versions are recorded
+- [x] Investigation history works
+
+### Stage B — Advanced Intelligence
+
+**Goal:** Cross-modal analysis, temporal investigation, human-readable explanations.
+
+| Task | File | Status |
+|------|------|--------|
+| Contradiction Engine | `backend/services/contradiction_engine.py` | ✅ |
+| Video Timeline | `backend/services/video_timeline.py` | ✅ |
+| Explanation Engine | `backend/services/explanation_engine.py` | ✅ |
+
+**Definition of Done:**
+- [x] Existing model contracts unchanged
+- [x] Cross-modal results are generated
+- [x] Video suspicious regions are detected
+- [x] Human-readable explanations are produced
+- [x] Missing evidence is clearly shown
+
+### Stage C — Investigation Experience
+
+**Goal:** Case management and human review queue.
+
+| Task | File | Status |
+|------|------|--------|
+| Case Management Router | `backend/routers/cases.py` | ✅ |
+| Human Review (in cases router) | `backend/routers/cases.py` | ✅ |
+
+**Definition of Done:**
+- [x] Cases can be created, listed, filtered
+- [x] Human reviews are stored separately from model predictions
+- [x] Case status updates on review
+- [x] Audit trail records all case events
+
+### Stage D — Real-World Features
+
+**Goal:** Screenshot investigation and claim extraction.
+
+| Task | File | Status |
+|------|------|--------|
+| Claim Extractor | `backend/services/claim_extractor.py` | ✅ |
+| Screenshot Investigation | `backend/services/screenshot_service.py` | ✅ |
+| Endpoints | `backend/routers/stretch.py` | ✅ |
+
+**Definition of Done:**
+- [x] Screenshots can be OCR'd and claims extracted
+- [x] Claims can be independently analyzed
+- [x] OCR feeds into existing NLP pipeline (no duplicate model)
+
+### Stage E — Research Features
+
+**Goal:** Performance monitoring.
+
+| Task | File | Status |
+|------|------|--------|
+| Performance Monitor | `backend/services/performance_monitor.py` | ✅ |
+| Endpoint | `backend/main.py` | ✅ |
+
+### Stage F — Feature Flags
+
+**Goal:** Toggleable modules via environment variables.
+
+| Task | File | Status |
+|------|------|--------|
+| Feature Flags Config | `backend/config.py` | ✅ |
+| Endpoint | `backend/main.py` | ✅ |
+
+---
+
+## 17. Scope for Future Extension (beyond submission)
 
 This architecture is intentionally modular so that after your evaluation, the project can keep growing without a rewrite:
 

@@ -97,7 +97,7 @@
         <tr><td>Video</td><td>MobileNetV2 + LSTM</td><td>Temporal deepfake detection with frame importance</td></tr>
         <tr><td>Audio</td><td>MFCC + MLP</td><td>Voice clone detection with frequency analysis</td></tr>
         <tr><td>Fusion</td><td>Weighted Ensemble</td><td>Dynamic weight renormalization + consistency check</td></tr>
-        <tr><td>Backend</td><td>FastAPI + SQLite</td><td>REST API with 16 endpoints</td></tr>
+        <tr><td>Backend</td><td>FastAPI + SQLite</td><td>REST API with 29 endpoints</td></tr>
         <tr><td>Frontend</td><td>Streamlit + Plotly</td><td>Interactive dashboard with gauges and charts</td></tr>
     </table>
 </div>
@@ -178,7 +178,54 @@
     </div>
 </div>
 
-<!-- Slide 8: Stretch Features -->
+<!-- Slide 8: Investigation Engine -->
+<div class="slide">
+    <h2>Investigation Engine</h2>
+    <p>Beyond simple predictions — structured investigations with evidence tracking.</p>
+    <div class="grid" style="margin-top: 40px;">
+        <div class="card">
+            <h3>📋 Evidence Ledger</h3>
+            <p>Each modality's output becomes a structured evidence record with type, score, impact, and category.</p>
+        </div>
+        <div class="card">
+            <h3>🔀 Contradiction Detection</h3>
+            <p>Cross-modal analysis detects when modalities disagree (text=fake, image=real) and flags conflicts.</p>
+        </div>
+        <div class="card">
+            <h3>💬 Human Explanations</h3>
+            <p>Technical signals translated into understandable reasons — never says "definitely fake".</p>
+        </div>
+        <div class="card">
+            <h3>📊 Evidence Metrics</h3>
+            <p>Evidence Strength (avg confidence) and Evidence Agreement (consistency across sources).</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 9: Case Management -->
+<div class="slide">
+    <h2>Case Management & Human Review</h2>
+    <div class="grid">
+        <div class="card">
+            <h3>📁 Investigation Cases</h3>
+            <p>Group multiple analyses into cases with status tracking: OPEN → UNDER_REVIEW → RESOLVED.</p>
+        </div>
+        <div class="card">
+            <h3>👥 Human Review Queue</h3>
+            <p>Reviewers submit verdicts (AUTHENTIC, MANIPULATED, MISLEADING) that never overwrite model predictions.</p>
+        </div>
+        <div class="card">
+            <h3>📜 Audit Trail</h3>
+            <p>Every event logged chronologically: case creation, evidence added, review submitted.</p>
+        </div>
+        <div class="card">
+            <h3>🔄 Re-analysis</h3>
+            <p>Update investigations when new evidence becomes available — versioned, non-destructive.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 10: Stretch Features -->
 <div class="slide">
     <h2>Stretch Features</h2>
     <div class="grid">
@@ -194,10 +241,14 @@
             <h3>🌐 Source Credibility</h3>
             <p>Check URLs against known low-credibility domain lists with heuristic analysis.</p>
         </div>
+        <div class="card">
+            <h3>🖼️ Screenshot Investigation</h3>
+            <p>OCR → extract claims → feed into existing NLP pipeline. No duplicate models.</p>
+        </div>
     </div>
 </div>
 
-<!-- Slide 9: Demo -->
+<!-- Slide 11: Demo -->
 <div class="slide">
     <h2>Live Demo</h2>
     <p>Walk through the Streamlit dashboard:</p>
@@ -221,12 +272,12 @@
     </div>
 </div>
 
-<!-- Slide 10: Results -->
+<!-- Slide 12: Results -->
 <div class="slide">
     <h2>Results</h2>
     <div class="grid">
         <div class="card" style="text-align: center;">
-            <div class="stat">16</div>
+            <div class="stat">29</div>
             <p>API Endpoints</p>
         </div>
         <div class="card" style="text-align: center;">
@@ -234,15 +285,15 @@
             <p>ML Models</p>
         </div>
         <div class="card" style="text-align: center;">
-            <div class="stat">36</div>
+            <div class="stat">49</div>
             <p>Tests Passing</p>
         </div>
         <div class="card" style="text-align: center;">
-            <div class="stat">10</div>
+            <div class="stat">16</div>
             <p>Phases Complete</p>
         </div>
     </div>
-    <p style="margin-top: 40px;">All models trained on CPU in under 15 minutes total.</p>
+    <p style="margin-top: 40px;">All models trained on CPU in under 15 minutes total. Investigation engine adds zero overhead to existing endpoints.</p>
 </div>
 
 <!-- Slide 11: Limitations & Future -->
