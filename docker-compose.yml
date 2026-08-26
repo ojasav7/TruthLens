@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: python:3.11-slim
+    working_dir: /app
+    command: >
+      bash -c "pip install streamlit requests &&
+               streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - API_URL=http://backend:8000
+    depends_on:
+      - backend

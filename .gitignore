@@ -1,0 +1,56 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Model weights (large files)
+models/*/weights/
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+
+# Data (large datasets - regenerate with scripts)
+data/raw/
+data/processed/
+data/audio/
+data/video_synthetic/
+data/images/
+
+# Database
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Agent/skill config
+.agents/
+.claude/
+.freebuff/
+skills-lock.json
+*.log.err
