@@ -1,13 +1,18 @@
 """Screenshot Investigation — OCR → claims → existing NLP pipeline. No duplicate models."""
 
-from backend.services.ocr_service import extract_text_from_image
+from backend.services.ocr_service import extract_text
 from backend.services.claim_extractor import extract_claims
+import io
+from PIL import Image
 
 
-async def investigate_screenshot(image_bytes: bytes, filename: str = "screenshot.png") -> dict:
-    """Full screenshot investigation pipeline: OCR → claims → text analysis."""
-    # Step 1: Extract text via OCR
-    ocr_result = await extract_text_from_image(image_bytes, filename)
+def investigate_screenshot(image_bytes: bytes, filename: str = "screenshot.png") -> dict:
+    """Full screenshot investigation pipeline: OCR → claims."""
+    try:
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        ocr_result = extract_text(img)
+    except Exception as e:
+        return {"status": "error", "error": str(e), "claims": []}
     extracted_text = ocr_result.get("text", "")
 
     if not extracted_text.strip():

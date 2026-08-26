@@ -98,7 +98,7 @@ async def investigate_screenshot(file: UploadFile = File(...)):
 
     try:
         contents = await file.read()
-        result = await _investigate(contents, file.filename or "screenshot.png")
+        result = _investigate(contents, file.filename or "screenshot.png")
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Screenshot investigation failed: {e}")
@@ -113,4 +113,5 @@ class ClaimRequest(BaseModel):
 async def extract_claims_endpoint(request: ClaimRequest):
     """Extract individual claims from text for independent analysis."""
     from backend.services.claim_extractor import extract_claims
-    return {"claims": extract_claims(request.text), "count": len(extract_claims(request.text))}
+    claims = extract_claims(request.text)
+    return {"claims": claims, "count": len(claims)}

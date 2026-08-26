@@ -81,8 +81,8 @@ async def health():
 @app.get("/performance", tags=["Research"])
 @limiter.exempt
 async def performance():
-    from backend.services.performance_monitor import monitor
-    return monitor.get_summary()
+    from backend.services.performance_monitor import get_summary
+    return get_summary()
 
 
 @app.get("/features", tags=["Research"])

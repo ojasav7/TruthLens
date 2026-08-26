@@ -1,7 +1,6 @@
 """Advanced features — fingerprint, graph, benchmark, calibration, radar, robustness, human-explain."""
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, Query
-from pydantic import BaseModel
 
 router = APIRouter(prefix="/advanced", tags=["Advanced Features"])
 

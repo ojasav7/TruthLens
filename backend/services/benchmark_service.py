@@ -1,16 +1,21 @@
 """Model Benchmark — tracks performance metrics per model version. ponytail: JSON file store."""
 
 import json
-import os
 from pathlib import Path
 
 BENCHMARK_FILE = Path("data/benchmarks.json")
+DEFAULTS = {
+    "nlp": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
+    "image": {"1.0.0": {"accuracy": 0.66, "f1": 0.65, "precision": 0.67, "recall": 0.64}},
+    "video": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
+    "audio": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
+}
 
 
 def _load() -> dict:
     if BENCHMARK_FILE.exists():
         return json.loads(BENCHMARK_FILE.read_text())
-    return {}
+    return {}  # ponytail: return defaults without writing to disk
 
 
 def _save(data: dict):
@@ -26,7 +31,7 @@ def record_benchmark(modality: str, version: str, metrics: dict):
 
 
 def get_benchmarks(modality: str | None = None) -> dict:
-    data = _load()
+    data = _load() or DEFAULTS  # ponytail: fall back to defaults without writing
     if modality:
         return {modality: data.get(modality, {})}
     return data
@@ -43,11 +48,4 @@ def get_versions() -> dict:
     return result
 
 
-# Seed default benchmarks if empty
-if not BENCHMARK_FILE.exists():
-    _save({
-        "nlp": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
-        "image": {"1.0.0": {"accuracy": 0.66, "f1": 0.65, "precision": 0.67, "recall": 0.64}},
-        "video": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
-        "audio": {"1.0.0": {"accuracy": 1.0, "f1": 1.0, "precision": 1.0, "recall": 1.0}},
-    })
+
