@@ -5,16 +5,20 @@ import io
 import uuid
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, File, Form, UploadFile, Query, HTTPException
+from fastapi import APIRouter, File, Form, UploadFile, Query, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from backend.db.database import async_session
 from backend.db.models import Analysis
 from sqlalchemy import select, desc, or_
+from backend.validation import validate_text, MAX_BATCH_ITEMS
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger("truthlens")
 router = APIRouter(tags=["Batch & Export"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ── Batch Analysis ──────────────────────────────────────────────
@@ -26,7 +30,8 @@ class BatchRequest(BaseModel):
 
 
 @router.post("/analyze/batch")
-async def analyze_batch(body: BatchRequest):
+@limiter.limit("10/minute")
+async def analyze_batch(request: Request, body: BatchRequest):
     """Analyze multiple text inputs in one request. Returns array of results."""
     from models.fusion.fuse import fuse
     from backend.services.model_loader import get_nlp_model
@@ -36,6 +41,9 @@ async def analyze_batch(body: BatchRequest):
         raise HTTPException(status_code=503, detail="NLP model not loaded")
 
     results = []
+    if len(body.items) > MAX_BATCH_ITEMS:
+        raise HTTPException(status_code=400, detail=f"Too many items: {len(body.items)} (max {MAX_BATCH_ITEMS})")
+
     for idx, item in enumerate(body.items):
         if not item.text or not item.text.strip():
             results.append({"index": idx, "error": "empty text"})
@@ -72,7 +80,8 @@ async def analyze_batch(body: BatchRequest):
 
 # ── Full-Text Search ────────────────────────────────────────────
 @router.get("/search")
-async def search(
+@limiter.limit("30/minute")
+async def search(request: Request,
     q: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=100),
 ):
@@ -133,7 +142,8 @@ async def search(
 
 # ── CSV/JSON Export ─────────────────────────────────────────────
 @router.get("/export/analyses")
-async def export_analyses(
+@limiter.limit("10/minute")
+async def export_analyses(request: Request,
     format: str = Query("json", pattern="^(json|csv)$"),
     limit: int = Query(100, ge=1, le=10000),
 ):
@@ -182,7 +192,8 @@ async def export_analyses(
 
 
 @router.get("/export/cases")
-async def export_cases(
+@limiter.limit("10/minute")
+async def export_cases(request: Request,
     format: str = Query("json", pattern="^(json|csv)$"),
     limit: int = Query(100, ge=1, le=10000),
 ):

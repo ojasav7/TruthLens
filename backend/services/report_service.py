@@ -209,4 +209,6 @@ def generate_report(analysis: dict) -> str:
     el.append(Paragraph(f"Generated: {analysis.get('timestamp', 'N/A')}", styles["Normal"]))
 
     doc.build(el)
+    if not pdf_path.exists():
+        raise RuntimeError(f"PDF generation failed: {pdf_path}")
     return str(pdf_path)

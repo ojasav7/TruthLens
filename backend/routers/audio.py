@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from backend.schemas import PredictionResponse
 from backend.services.model_loader import get_audio_model
+from backend.validation import validate_upload
 
 router = APIRouter()
 
@@ -31,7 +32,7 @@ async def _run_audio(file: UploadFile, fn):
     if not file.content_type or not any(file.content_type.startswith(p) for p in ALLOWED):
         raise HTTPException(status_code=400, detail="File must be audio or video")
     suffix = Path(file.filename or "audio.wav").suffix or ".wav"
-    contents = await file.read()
+    contents = await validate_upload(file)
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
     tmp.write(contents); tmp.close()
     try:

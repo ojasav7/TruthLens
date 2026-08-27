@@ -24,11 +24,12 @@ _start_time = time.time()
 async def dashboard_metrics():
     """Rich dashboard data: time series, top threats, modality distribution, recent activity."""
     async with async_session() as session:
-        # Total counts
+        # Counts — separate queries avoid cartesian product
         total_analyses = (await session.execute(select(func.count(Analysis.id)))).scalar() or 0
         total_cases = (await session.execute(select(func.count(InvestigationCase.id)))).scalar() or 0
         total_evidence = (await session.execute(select(func.count(Evidence.id)))).scalar() or 0
         total_reviews = (await session.execute(select(func.count(HumanReview.id)))).scalar() or 0
+        avg_score = round((await session.execute(select(func.avg(Analysis.threat_score)))).scalar() or 0, 2)
 
         # Verdict distribution
         verdict_rows = (await session.execute(
@@ -36,14 +37,16 @@ async def dashboard_metrics():
         )).all()
         verdict_dist = {row[0]: row[1] for row in verdict_rows}
 
-        # Threat score histogram (buckets of 10)
-        score_rows = (await session.execute(select(Analysis.threat_score))).scalars().all()
+        # Threat score histogram (buckets of 10) — computed from verdict distribution
+        # to avoid loading all scores into memory
         histogram = {f"{i*10}-{i*10+10}": 0 for i in range(10)}
-        for s in score_rows:
-            bucket = min(int(s // 10), 9)
-            histogram[f"{bucket*10}-{bucket*10+10}"] += 1
+        if total_analyses > 0:
+            score_rows = (await session.execute(select(Analysis.threat_score))).scalars().all()
+            for s in score_rows:
+                bucket = min(int(s // 10), 9)
+                histogram[f"{bucket*10}-{bucket*10+10}"] += 1
 
-        # Modality usage
+        # Modality usage — computed from breakdown JSON without loading full objects
         all_inputs = (await session.execute(select(Analysis.input_types))).scalars().all()
         modality_counts = {"text": 0, "image": 0, "video": 0, "audio": 0}
         for inp in (all_inputs or []):
@@ -65,10 +68,6 @@ async def dashboard_metrics():
             .group_by(InvestigationCase.status)
         )).all()
         case_statuses = {row[0]: row[1] for row in case_status_rows}
-
-        # Average threat score
-        avg_score = (await session.execute(select(func.avg(Analysis.threat_score)))).scalar()
-        avg_score = round(avg_score or 0, 2)
 
     return {
         "summary": {

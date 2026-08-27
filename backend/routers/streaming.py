@@ -25,12 +25,14 @@ async def upload_chunk(
 
     data = await file.read()
 
+    if modality not in ("audio", "video"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Unsupported modality: {modality}. Use 'audio' or 'video'.")
+
     if modality == "audio":
         result = await _analyze_audio_chunk(data, file.filename or "chunk.wav")
-    elif modality == "video":
-        result = await _analyze_video_chunk(data, file.filename or "chunk.mp4")
     else:
-        return {"error": f"Unsupported modality: {modality}"}
+        result = await _analyze_video_chunk(data, file.filename or "chunk.mp4")
 
     return {"session_id": session_id, "modality": modality, "analysis": result}
 

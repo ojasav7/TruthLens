@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from backend.schemas import PredictionResponse
 from backend.services.model_loader import get_nlp_model
+from backend.validation import validate_text
 
 router = APIRouter()
 
@@ -33,6 +34,7 @@ async def predict_text(request: TextRequest):
 
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text must not be empty")
+    validate_text(request.text)
 
     result = nlp.predict(request.text)
     return PredictionResponse(**result)
@@ -47,6 +49,7 @@ async def predict_text_explain(request: TextRequest):
 
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text must not be empty")
+    validate_text(request.text)
 
     try:
         result = nlp.explain(request.text, top_k=request.top_k)

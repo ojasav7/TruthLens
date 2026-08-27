@@ -7,6 +7,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from backend.services.model_loader import get_video_model
+from backend.validation import validate_upload
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ async def _run_video(file: UploadFile, fn):
     if not file.content_type or not file.content_type.startswith("video/"):
         raise HTTPException(status_code=400, detail="File must be a video")
     suffix = Path(file.filename or "video.mp4").suffix or ".mp4"
-    contents = await file.read()
+    contents = await validate_upload(file)
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
     tmp.write(contents); tmp.close()
     try:

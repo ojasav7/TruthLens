@@ -7,6 +7,7 @@ from PIL import Image
 
 from backend.schemas import PredictionResponse
 from backend.services.model_loader import get_image_model
+from backend.validation import validate_upload, MAX_UPLOAD_BYTES
 
 router = APIRouter()
 
@@ -24,8 +25,10 @@ async def _read_image(file: UploadFile) -> Image.Image:
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     try:
-        contents = await file.read()
+        contents = await validate_upload(file)
         return Image.open(io.BytesIO(contents)).convert("RGB")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 

@@ -16,6 +16,10 @@ class CaseCreate(BaseModel):
     description: str = ""
     analysis_ids: list[str] = []
 
+    def model_post_init(self, __context):
+        if not self.title.strip():
+            raise ValueError("title must not be empty")
+
 
 class ReviewSubmit(BaseModel):
     reviewer_id: str

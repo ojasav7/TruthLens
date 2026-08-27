@@ -16,6 +16,7 @@ from backend.db.database import async_session
 from backend.db.models import Analysis
 from backend.services.model_loader import get_nlp_model, get_image_model, get_video_model, get_audio_model
 from models.fusion.fuse import fuse
+from backend.validation import validate_upload, validate_text
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -59,13 +60,14 @@ async def analyze(request: Request,
 
     # --- NLP ---
     if text and nlp:
+        text = validate_text(text)
         scores["text"] = nlp.predict(text)
         input_types.append("text")
 
     # --- Image ---
     if image and img_model:
         try:
-            contents = await image.read()
+            contents = await validate_upload(image)
             pil_img = __import__("PIL").Image.open(io.BytesIO(contents)).convert("RGB")
             scores["image"] = img_model.predict(pil_img)
             input_types.append("image")
@@ -76,7 +78,7 @@ async def analyze(request: Request,
     if video and vid_model:
         suffix = Path(video.filename or "video.mp4").suffix or ".mp4"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            contents = await video.read()
+            contents = await validate_upload(video)
             tmp.write(contents)
             tmp_path = tmp.name
         try:
@@ -91,7 +93,7 @@ async def analyze(request: Request,
     if audio and aud_model:
         suffix = Path(audio.filename or "audio.wav").suffix or ".wav"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            contents = await audio.read()
+            contents = await validate_upload(audio)
             tmp.write(contents)
             tmp_path = tmp.name
         try:

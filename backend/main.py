@@ -40,6 +40,9 @@ async def lifespan(app: FastAPI):
     # Create DB tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Create indexes
+    from backend.db.indexes import create_indexes
+    await create_indexes()
     _log.info("[OK] Database initialized.")
 
     # Load models once at startup (singleton pattern)
@@ -67,10 +70,12 @@ register_error_handlers(app)
 # Request ID + logging middleware
 app.add_middleware(RequestIDMiddleware)
 
-# CORS — allow Streamlit frontend
+# CORS — restrict in production, open in dev
+import os
+_production = os.getenv("ENVIRONMENT", "development") == "production"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"] if not _production else ["http://localhost:8501", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -95,7 +100,7 @@ app.include_router(dashboard.router)
 @app.get("/", tags=["Health"])
 @limiter.exempt
 async def root():
-    return {"status": "ok", "service": "TruthLens API", "version": "0.1.0"}
+    return {"status": "ok", "service": "TruthLens API", "version": "1.0.0"}
 
 
 @app.get("/health", tags=["Health"])
@@ -159,6 +164,8 @@ async def predict_multilingual(text: str = None, body: dict | None = None):
     from backend.services.language_router import multilingual_nlp
     if body and "text" in body:
         text = body["text"]
-    if not text:
-        return {"error": "text required"}
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Text is required")
+    if len(text) > 10000:
+        raise HTTPException(status_code=400, detail="Text too long (max 10000 chars)")
     return multilingual_nlp.predict(text)

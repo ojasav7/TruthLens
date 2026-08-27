@@ -75,7 +75,8 @@ class CredibilityResponse(BaseModel):
 async def check_source_credibility(request: CredibilityRequest):
     """Check a URL's domain against known credibility lists."""
     from backend.services.credibility_service import check_url
-
+    if not request.url or len(request.url) > 2048:
+        raise HTTPException(status_code=400, detail="Invalid URL length")
     result = check_url(request.url)
     return CredibilityResponse(**result)
 
@@ -113,5 +114,7 @@ class ClaimRequest(BaseModel):
 async def extract_claims_endpoint(request: ClaimRequest):
     """Extract individual claims from text for independent analysis."""
     from backend.services.claim_extractor import extract_claims
+    from backend.validation import validate_text
+    validate_text(request.text)
     claims = extract_claims(request.text)
     return {"claims": claims, "count": len(claims)}
