@@ -4,10 +4,12 @@ uvicorn[standard]==0.32.0
 python-multipart==0.0.18
 pydantic==2.10.0
 python-dotenv==1.1.0
+slowapi==0.1.9
 
 # Database
 sqlalchemy==2.0.36
 aiosqlite==0.21.0
+alembic==1.14.0
 
 # ML / Models
 torch>=2.1.0

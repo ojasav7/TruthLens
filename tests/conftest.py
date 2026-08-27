@@ -9,5 +9,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Load models at test startup (same as FastAPI lifespan)
-from backend.services.model_loader import load_all_models
-load_all_models()
+try:
+    from backend.services.model_loader import load_all_models
+    load_all_models()
+except ImportError:
+    pass  # torch not installed — skip model loading in test env

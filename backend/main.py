@@ -14,24 +14,42 @@ from slowapi.errors import RateLimitExceeded
 from backend.db.database import engine, Base
 from backend.db import models, models_advanced  # noqa: F401 — register tables for create_all
 from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases, advanced, streaming, workspaces
-from backend.services.model_loader import load_all_models
+from backend.routers import batch, dashboard
+from backend.middleware import RequestIDMiddleware, setup_logging
+from backend.errors import register_error_handlers, validate_startup
+try:
+    from backend.services.model_loader import load_all_models
+except ImportError:
+    load_all_models = None  # torch not installed
 
 # Load environment variables
 load_dotenv()
+setup_logging()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: load all ML models. Shutdown: cleanup."""
+    """Startup: validate, load models, create DB tables. Shutdown: cleanup."""
+    import logging
+    _log = logging.getLogger("truthlens")
+
+    # Startup validation
+    for w in validate_startup():
+        _log.warning("STARTUP: %s", w)
+
     # Create DB tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    _log.info("[OK] Database initialized.")
 
     # Load models once at startup (singleton pattern)
-    load_all_models()
-    print("[OK] All models loaded and DB initialized.")
+    try:
+        load_all_models()
+        _log.info("[OK] All models loaded.")
+    except ImportError:
+        _log.warning("ML dependencies (torch/cv2) not installed — running without models.")
     yield
-    print("[Shutdown] TruthLens stopped.")
+    _log.info("[Shutdown] TruthLens stopped.")
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -39,11 +57,15 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="TruthLens API",
     description="AI Multimodal Misinformation & Threat Detection Platform",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+register_error_handlers(app)
+
+# Request ID + logging middleware
+app.add_middleware(RequestIDMiddleware)
 
 # CORS — allow Streamlit frontend
 app.add_middleware(
@@ -66,6 +88,8 @@ app.include_router(cases.router)
 app.include_router(advanced.router)
 app.include_router(streaming.router)
 app.include_router(workspaces.router)
+app.include_router(batch.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/", tags=["Health"])

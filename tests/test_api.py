@@ -617,3 +617,119 @@ class TestStageFFeatures:
             assert "analysis" in data
         finally:
             path.unlink(missing_ok=True)
+
+
+class TestBatchAnalysis:
+    def test_batch_text(self, client):
+        resp = client.post("/analyze/batch", json={
+            "items": [
+                {"text": "Breaking: major event today"},
+                {"text": "Scientists discover new planet"},
+                {"text": "SHOCKING: you won't believe this"},
+            ]
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["count"] == 3
+        assert len(data["results"]) == 3
+        for r in data["results"]:
+            assert "verdict" in r or "error" in r
+
+    def test_batch_empty_item(self, client):
+        resp = client.post("/analyze/batch", json={
+            "items": [{"text": ""}, {"text": "Valid text here"}]
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["results"][0].get("error") == "empty text"
+        assert "verdict" in data["results"][1]
+
+    def test_batch_empty_list(self, client):
+        resp = client.post("/analyze/batch", json={"items": []})
+        assert resp.status_code == 200
+        assert resp.json()["count"] == 0
+
+
+class TestSearch:
+    def test_search_analyses(self, client):
+        resp = client.get("/search?q=Low")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "results" in data
+        assert "total" in data
+
+    def test_search_cases(self, client):
+        # Create a case first
+        client.post("/cases", json={"title": "Unique Searchable Case Title XYZ"})
+        resp = client.get("/search?q=Unique Searchable")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] >= 1
+        assert data["results"][0]["type"] == "case"
+
+    def test_search_no_results(self, client):
+        resp = client.get("/search?q=zzznonexistent999")
+        assert resp.status_code == 200
+        assert resp.json()["total"] == 0
+
+
+class TestExport:
+    def test_export_analyses_json(self, client):
+        resp = client.get("/export/analyses?format=json&limit=5")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "analyses" in data
+        assert "count" in data
+
+    def test_export_analyses_csv(self, client):
+        resp = client.get("/export/analyses?format=csv&limit=5")
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "text/csv; charset=utf-8"
+        content = resp.text
+        assert "id" in content
+        assert "verdict" in content
+
+    def test_export_cases_json(self, client):
+        resp = client.get("/export/cases?format=json&limit=5")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "cases" in data
+
+    def test_export_cases_csv(self, client):
+        resp = client.get("/export/cases?format=csv&limit=5")
+        assert resp.status_code == 200
+        assert "title" in resp.text
+
+
+class TestDashboardAndHealth:
+    def test_dashboard(self, client):
+        resp = client.get("/dashboard")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "summary" in data
+        assert "verdict_distribution" in data
+        assert "threat_histogram" in data
+        assert "modality_usage" in data
+        assert data["summary"]["total_analyses"] > 0
+
+    def test_detailed_health(self, client):
+        resp = client.get("/health/detailed")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] in ("healthy", "degraded")
+        assert "uptime_seconds" in data
+        assert "checks" in data
+        assert "database" in data["checks"]
+        assert "models" in data["checks"]
+
+    def test_request_id_header(self, client):
+        resp = client.get("/")
+        assert "X-Request-ID" in resp.headers
+        assert "X-Response-Time" in resp.headers
+
+    def test_error_handler(self, client):
+        resp = client.get("/nonexistent")
+        assert resp.status_code == 404
+        data = resp.json()
+        assert data["error"] is True
+        assert "detail" in data
