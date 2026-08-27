@@ -49,7 +49,8 @@ async def analyze_batch(request: Request, body: BatchRequest):
             results.append({"index": idx, "error": "empty text"})
             continue
         try:
-            pred = nlp.predict(item.text)
+            text = validate_text(item.text)
+            pred = nlp.predict(text)
             fused = fuse({"text": pred})
             analysis_id = str(uuid.uuid4())
             ts = datetime.now(timezone.utc)

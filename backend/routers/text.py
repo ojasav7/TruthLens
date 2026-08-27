@@ -34,9 +34,9 @@ async def predict_text(request: TextRequest):
 
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text must not be empty")
-    validate_text(request.text)
+    text = validate_text(request.text)
 
-    result = nlp.predict(request.text)
+    result = nlp.predict(text)
     return PredictionResponse(**result)
 
 
@@ -49,10 +49,10 @@ async def predict_text_explain(request: TextRequest):
 
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text must not be empty")
-    validate_text(request.text)
+    text = validate_text(request.text)
 
     try:
-        result = nlp.explain(request.text, top_k=request.top_k)
+        result = nlp.explain(text, top_k=request.top_k)
         return ExplainResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Explanation failed: {e}")

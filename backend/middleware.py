@@ -45,8 +45,22 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:12])
         request.state.request_id = request_id
 
+        # Inject request_id into all log records during this request
+        old_factory = logging.getLogRecordFactory()
+
+        def record_factory(*args, **kwargs):
+            record = old_factory(*args, **kwargs)
+            record.request_id = request_id
+            return record
+
+        logging.setLogRecordFactory(record_factory)
+
         start = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        finally:
+            logging.setLogRecordFactory(old_factory)
+
         elapsed_ms = round((time.perf_counter() - start) * 1000, 1)
 
         response.headers["X-Request-ID"] = request_id
