@@ -133,23 +133,32 @@ class VideoDeepfakeDetector:
         return True
 
     def predict(self, video_path: str) -> dict:
-        """Classify a video as real or fake using CNN+LSTM model."""
+        """Classify a video as real or fake using multi-signal ensemble."""
         frames = self._extract_frames(video_path)
         if not frames:
             return {"label": "real", "confidence": 0.0, "per_frame_scores": []}
 
-        # Realism check
+        # --- Multi-signal ensemble ---
+        signals = {}
+
+        # Signal 1: Resolution check
+        h, w = frames[0].shape[:2]
+        signals["resolution"] = f"{w}x{h}"
+        signals["is_low_res"] = w < 100 or h < 100
+
+        # Signal 2: Realism heuristic (texture, color, temporal consistency)
         is_real = self._is_real_video(frames)
+        signals["is_real_footage"] = is_real
 
+        # Signal 3: CNN+LSTM model prediction
         video_tensor = self._transform_frames(frames)
-
         with torch.no_grad():
             logits = self.model(video_tensor)
             probs = torch.softmax(logits, dim=1)
             pred_idx = probs.argmax(dim=1).item()
             confidence = probs[0, pred_idx].item()
 
-            # Per-frame scores via CNN features
+            # Per-frame scores
             frame_features = self.model.get_frame_features(video_tensor)
             frame_scores = []
             for i in range(frame_features.shape[1]):
@@ -158,23 +167,91 @@ class VideoDeepfakeDetector:
                 frame_scores.append({"frame": i, "score": round(score, 4)})
 
         model_label = self.labels[pred_idx]
+        signals["model"] = {"label": model_label, "confidence": round(confidence, 4)}
 
-        # If this is a real video but the model says "fake", override
-        if is_real and model_label == "fake":
-            return {
-                "label": "real",
-                "confidence": round(min(confidence, 0.85), 4),
-                "per_frame_scores": frame_scores,
-                "note": "Video appears to be real footage. Model is trained on synthetic data and may misclassify real videos.",
-                "model_raw": model_label,
-                "model_confidence": round(confidence, 4),
-            }
+        # Signal 4: Frame-to-frame consistency
+        diffs = []
+        for i in range(1, min(len(frames), 10)):
+            diff = np.abs(frames[i].astype(float) - frames[i-1].astype(float)).mean()
+            diffs.append(diff)
+        avg_diff = np.mean(diffs) if diffs else 0
+        signals["temporal_diff"] = round(avg_diff, 2)
+
+        # Signal 5: Face detection in frames
+        import cv2
+        face_counts = []
+        for frame in frames[:5]:
+            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+            mask = cv2.inRange(hsv, np.array([0, 20, 70], dtype=np.uint8),
+                              np.array([20, 150, 255], dtype=np.uint8))
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            face_like = sum(1 for c in contours
+                          if cv2.contourArea(c) > (h * w * 0.01))
+            face_counts.append(face_like)
+        signals["faces_per_frame"] = face_counts
+        signals["has_faces"] = any(f > 0 for f in face_counts)
+
+        # --- Ensemble voting ---
+        votes = []
+        weights = []
+
+        # Model vote (weight: 0.3 — trained on synthetic data)
+        model_is_fake = model_label == "fake"
+        votes.append(1.0 if model_is_fake else 0.0)
+        weights.append(0.3)
+
+        # Realism vote (weight: 0.5 — texture, color, temporal consistency)
+        realism_score = 0.0
+        if is_real:
+            realism_score += 0.3
+        if not signals["is_low_res"]:
+            realism_score += 0.2
+        if signals["has_faces"]:
+            realism_score += 0.2
+        if avg_diff < 30:  # Smooth motion = real
+            realism_score += 0.3
+        votes.append(1.0 - realism_score)
+        weights.append(0.5)
+
+        # Temporal consistency vote (weight: 0.2)
+        # Real videos have smooth transitions; deepfakes may have frame glitches
+        if avg_diff > 40:  # High temporal variation = suspicious
+            votes.append(0.7)
+        elif avg_diff < 10:  # Very smooth = real
+            votes.append(0.1)
+        else:
+            votes.append(0.3)
+        weights.append(0.2)
+
+        # Calculate weighted score
+        total_weight = sum(weights)
+        fake_score = sum(v * w for v, w in zip(votes, weights)) / total_weight
+
+        # Determine label
+        if fake_score > 0.65:
+            label = "fake"
+            conf = min(0.95, fake_score)
+        elif fake_score < 0.35:
+            label = "real"
+            conf = min(0.95, 1 - fake_score)
+        else:
+            label = "indeterminate"
+            conf = 1 - abs(fake_score - 0.5) * 2
+
+        # Build verdict
+        vote_details = []
+        vote_details.append(f"Model: {model_label} ({confidence:.1%})")
+        vote_details.append(f"Realism: {'real' if is_real else 'synthetic'}")
+        vote_details.append(f"Faces: {signals['has_faces']}")
+        vote_details.append(f"Temporal: {avg_diff:.1f}")
 
         return {
-            "label": model_label,
-            "confidence": round(confidence, 4),
+            "label": label,
+            "confidence": round(conf, 4),
             "per_frame_scores": frame_scores,
-            "note": "Analysis based on synthetic deepfake artifact detection.",
+            "signals": signals,
+            "verdict": f"Ensemble: {label.upper()} ({conf:.1%}). {' | '.join(vote_details)}",
         }
 
     def explain(self, video_path: str, top_k: int = 5) -> dict:

@@ -141,6 +141,8 @@ def _is_synthetic_content(img: Image.Image) -> bool:
 def ensemble_predict(
     img: Image.Image,
     cnn_model=None,
+    hf_model=None,
+    hf_processor=None,
 ) -> dict:
     """
     Multi-signal ensemble deepfake prediction.
@@ -183,6 +185,33 @@ def ensemble_predict(
         except Exception as e:
             signals["cnn_error"] = str(e)
 
+    # Signal 5: HuggingFace model (if available, run on face crops)
+    hf_result = None
+    if hf_model is not None and hf_processor is not None and faces:
+        try:
+            import torch
+            # Run on largest face with padding
+            largest_face = max(faces, key=lambda f: f[2] * f[3])
+            x, y, fw, fh = largest_face
+            pad = int(max(fw, fh) * 0.3)
+            x1 = max(0, x - pad)
+            y1 = max(0, y - pad)
+            x2 = min(img_rgb.width, x + fw + pad)
+            y2 = min(img_rgb.height, y + fh + pad)
+            face_crop = img_rgb.crop((x1, y1, x2, y2))
+
+            inputs = hf_processor(images=face_crop, return_tensors="pt")
+            with torch.no_grad():
+                outputs = hf_model(**inputs)
+                probs = torch.softmax(outputs.logits, dim=1)
+                pred_idx = probs.argmax(dim=1).item()
+                hf_conf = probs[0][pred_idx].item()
+                hf_label = hf_model.config.id2label.get(pred_idx, str(pred_idx))
+            hf_result = {"label": hf_label.lower(), "confidence": round(hf_conf, 4)}
+            signals["hf_face"] = hf_result
+        except Exception as e:
+            signals["hf_error"] = str(e)
+
     # ---- Ensemble Logic ----
 
     # Case 1: No face detected — deepfake detection is N/A
@@ -207,25 +236,30 @@ def ensemble_predict(
     votes = []
     weights = []
 
-    # CNN vote (weight: 0.3 — trained on synthetic data, less reliable on real photos)
+    # CNN vote (weight: 0.2 — trained on synthetic data, less reliable on real photos)
     if cnn_result:
         cnn_is_fake = cnn_result["label"] == "fake"
         votes.append(1.0 if cnn_is_fake else 0.0)
-        weights.append(0.3)
+        weights.append(0.2)
 
-    # Realism vote (weight: 0.7 — texture, color, face detection, quality)
-    # This is the key signal for real photos
+    # HuggingFace vote (weight: 0.4 — trained on real deepfake data, most reliable)
+    if hf_result:
+        hf_is_fake = hf_result["label"] in ("fake", "deepfake")
+        votes.append(1.0 if hf_is_fake else 0.0)
+        weights.append(0.4)
+
+    # Realism vote (weight: 0.4 — texture, color, face detection, quality)
     realism_score = 0.0
     if signals["has_face"]:
-        realism_score += 0.25  # Has face = real photo characteristic
+        realism_score += 0.25
     if quality["overall"] > 0.6:
-        realism_score += 0.25  # High quality = real photo
+        realism_score += 0.25
     if not is_synth:
-        realism_score += 0.25  # Not synthetic = real content
+        realism_score += 0.25
     if quality["texture"] > 0.3:
-        realism_score += 0.25  # Has texture = real photo
-    votes.append(1.0 - realism_score)  # Invert: high realism = low fake score
-    weights.append(0.7)
+        realism_score += 0.25
+    votes.append(1.0 - realism_score)
+    weights.append(0.4)
 
     # Calculate weighted vote
     if weights:
@@ -249,6 +283,8 @@ def ensemble_predict(
     vote_details = []
     if cnn_result:
         vote_details.append(f"CNN: {cnn_result['label']} ({cnn_result['confidence']:.1%})")
+    if hf_result:
+        vote_details.append(f"HF: {hf_result['label']} ({hf_result['confidence']:.1%})")
     vote_details.append(f"Faces: {len(faces)}")
     vote_details.append(f"Quality: {quality['overall']:.1%}")
 
