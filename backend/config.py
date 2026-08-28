@@ -3,33 +3,75 @@
 import os
 
 
+def _flag(name: str, default: str = "true") -> bool:
+    return os.getenv(f"TL_{name}", default).lower() == "true"
+
+
 class FeatureFlags:
     # Stage A
-    INVESTIGATION_MODE = os.getenv("TL_INVESTIGATION_MODE", "true").lower() == "true"
-    EVIDENCE_ENGINE = os.getenv("TL_EVIDENCE_ENGINE", "true").lower() == "true"
-    AUDIT_TRAIL = os.getenv("TL_AUDIT_TRAIL", "true").lower() == "true"
-    MODEL_VERSION_TRACKING = os.getenv("TL_MODEL_VERSIONS", "true").lower() == "true"
+    INVESTIGATION_MODE = _flag("INVESTIGATION_MODE")
+    EVIDENCE_ENGINE = _flag("EVIDENCE_ENGINE")
+    AUDIT_TRAIL = _flag("AUDIT_TRAIL")
+    MODEL_VERSION_TRACKING = _flag("MODEL_VERSIONS")
 
     # Stage B
-    CONTRADICTION_ENGINE = os.getenv("TL_CONTRADICTION", "true").lower() == "true"
-    VIDEO_TIMELINE = os.getenv("TL_VIDEO_TIMELINE", "true").lower() == "true"
-    EXPLANATION_ENGINE = os.getenv("TL_EXPLANATION", "true").lower() == "true"
+    CONTRADICTION_ENGINE = _flag("CONTRADICTION")
+    VIDEO_TIMELINE = _flag("VIDEO_TIMELINE")
+    EXPLANATION_ENGINE = _flag("EXPLANATION")
 
     # Stage C
-    CASE_MANAGEMENT = os.getenv("TL_CASE_MGMT", "true").lower() == "true"
-    HUMAN_REVIEW = os.getenv("TL_HUMAN_REVIEW", "true").lower() == "true"
+    CASE_MANAGEMENT = _flag("CASE_MGMT")
+    HUMAN_REVIEW = _flag("HUMAN_REVIEW")
 
     # Stage D
-    SCREENSHOT_INVESTIGATION = os.getenv("TL_SCREENSHOT", "true").lower() == "true"
-    CLAIM_EXTRACTION = os.getenv("TL_CLAIMS", "true").lower() == "true"
+    SCREENSHOT_INVESTIGATION = _flag("SCREENSHOT")
+    CLAIM_EXTRACTION = _flag("CLAIMS")
 
     # Stage E
-    PERFORMANCE_MONITOR = os.getenv("TL_PERF_MONITOR", "true").lower() == "true"
+    PERFORMANCE_MONITOR = _flag("PERF_MONITOR")
 
     # Existing stretch features
-    OCR = os.getenv("TL_OCR", "true").lower() == "true"
-    EXIF = os.getenv("TL_EXIF", "true").lower() == "true"
-    CREDIBILITY = os.getenv("TL_CREDIBILITY", "true").lower() == "true"
+    OCR = _flag("OCR")
+    EXIF = _flag("EXIF")
+    CREDIBILITY = _flag("CREDIBILITY")
+
+    # Next-gen: Reliability
+    ENABLE_ENSEMBLE = _flag("ENSEMBLE")
+    ENABLE_UNCERTAINTY = _flag("UNCERTAINTY")
+    ENABLE_CONSISTENCY_CHECK = _flag("CONSISTENCY_CHECK")
+    ENABLE_EVIDENCE_QUALITY = _flag("EVIDENCE_QUALITY")
+    ENABLE_COUNTERFACTUALS = _flag("COUNTERFACTUALS")
+
+    # Next-gen: Security
+    ENABLE_SECURE_SANDBOX = _flag("SECURE_SANDBOX")
+    ENABLE_PRIVACY_MODE = _flag("PRIVACY_MODE")
+    ENABLE_DATA_RETENTION = _flag("DATA_RETENTION")
+
+    # Next-gen: Performance
+    ENABLE_SMART_CACHE = _flag("SMART_CACHE")
+    ENABLE_SIMILARITY = _flag("SIMILARITY")
+    ENABLE_ASYNC_ANALYSIS = _flag("ASYNC_ANALYSIS")
+
+    # Next-gen: Research
+    ENABLE_RED_TEAM = _flag("RED_TEAM")
+    ENABLE_DRIFT_MONITORING = _flag("DRIFT_MONITORING")
+    ENABLE_MODEL_CHALLENGER = _flag("MODEL_CHALLENGER")
+
+    # Next-gen: Operations
+    ENABLE_OBSERVABILITY = _flag("OBSERVABILITY")
+    ENABLE_GOLDEN_TESTS = _flag("GOLDEN_TESTS")
+
+    # Next-gen: Adaptive
+    ENABLE_ADAPTIVE_ANALYSIS = _flag("ADAPTIVE_ANALYSIS", "false")
+
+    # Investigation Intelligence
+    ENABLE_EVIDENCE_CHAIN = _flag("EVIDENCE_CHAIN")
+    ENABLE_REPRODUCIBILITY = _flag("REPRODUCIBILITY")
+    ENABLE_CONFLICT_RESOLUTION = _flag("CONFLICT_RESOLUTION")
+    ENABLE_ANNOTATIONS = _flag("ANNOTATIONS")
+    ENABLE_INVESTIGATION_COPILOT = _flag("INVESTIGATION_COPILOT")
+    ENABLE_INTEGRITY_SCORE = _flag("INTEGRITY_SCORE")
+    ENABLE_INVESTIGATION_CONFIDENCE = _flag("INV_CONFIDENCE")
 
 
 flags = FeatureFlags()

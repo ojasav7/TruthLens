@@ -25,8 +25,13 @@ models/*/weights/
 data/raw/
 data/processed/
 data/audio/
+data/audio_v2/
+data/audio_v3/
 data/video_synthetic/
+data/video_synthetic_v2/
+data/video_v3/
 data/images/
+data/reports/
 
 # Database
 *.db

@@ -38,6 +38,20 @@ services:
       backend:
         condition: service_healthy
 
+  admin:
+    image: python:3.12-slim
+    working_dir: /app
+    command: >
+      bash -c "pip install --no-cache-dir streamlit plotly requests pandas &&
+               streamlit run frontend/admin_dashboard.py --server.port 8502 --server.address 0.0.0.0 --server.headless true"
+    ports:
+      - "8502:8502"
+    environment:
+      - API_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+
   nginx:
     image: nginx:alpine
     ports:
@@ -47,6 +61,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - admin
 
 volumes:
   model-weights:

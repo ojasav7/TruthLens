@@ -43,6 +43,10 @@ async def analyze(request: Request,
     Combined multimodal analysis.
     Accepts any subset of text/image/video/audio, at least one required.
     """
+    # Normalize: strip whitespace, treat empty string as None
+    if text:
+        text = text.strip() or None
+
     # Validate at least one input
     if not text and not image and not video and not audio:
         raise HTTPException(
