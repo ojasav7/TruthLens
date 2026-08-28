@@ -1,17 +1,16 @@
 """
-Image Deepfake Classifier -- Phase 2
-EfficientNet-B4 + Grad-CAM explainability.
+Image Deepfake Classifier
+Auto-detects best available weights and architecture:
+  - model_v3.pth → SimpleCNN at 64x64 (fastest, retrained on 6K images)
+  - model.pth    → EfficientNet-B4 at 224x224 (original, 59% accuracy)
 """
-
-import os
-import base64
-import io
+import os, base64, io
 from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
-import timm
+import torch.nn as nn
 from PIL import Image
 from torchvision import transforms
 
@@ -19,29 +18,70 @@ from torchvision import transforms
 MODEL_DIR = Path(os.getenv("MODEL_DIR", "./models")) / "image" / "weights"
 
 
+class ImageCNN(nn.Module):
+    """Lightweight CNN — trains fast, good accuracy on 6K+ images."""
+
+    def __init__(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(), nn.AdaptiveAvgPool2d(1),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(128, 64), nn.ReLU(), nn.Dropout(0.4), nn.Linear(64, 2)
+        )
+
+    def forward(self, x):
+        return self.classifier(self.features(x).flatten(1))
+
+
 class ImageDeepfakeDetector:
     def __init__(self, weights_path=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.path = Path(weights_path) if weights_path else MODEL_DIR
+        self.labels = ["real", "fake"]
+        self.arch = None  # "cnn" or "efficientnet"
 
+        # Try v3 weights first (fast CNN)
+        v3_path = self.path / "model_v3.pth"
+        if v3_path.exists():
+            self.arch = "cnn"
+            self.model = ImageCNN()
+            state = torch.load(v3_path, map_location=self.device, weights_only=True)
+            self.model.load_state_dict(state)
+            self.model.to(self.device)
+            self.model.eval()
+            # ImageFolder uses alphabetical class order: fake=0, real=1
+            self.labels = ["fake", "real"]
+            self.transform = transforms.Compose([
+                transforms.Resize((64, 64)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ])
+            print("[Image] Loaded v3 CNN weights (64x64)")
+            return
+
+        # Fall back to EfficientNet
+        import timm
+        self.arch = "efficientnet"
         self.model = timm.create_model("efficientnet_b4", pretrained=True, num_classes=2)
         weights_file = self.path / "model.pth"
         if weights_file.exists():
             self.model.load_state_dict(
-                torch.load(weights_file, map_location=self.device)
+                torch.load(weights_file, map_location=self.device, weights_only=True)
             )
+            print("[Image] Loaded EfficientNet weights")
         else:
-            print(f"[Warning] No weights at {weights_file}, using ImageNet-pretrained head")
+            print("[Image] No weights found, using ImageNet-pretrained head")
 
         self.model.to(self.device)
         self.model.eval()
-
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
-        self.labels = ["real", "fake"]
 
     def _load_image(self, image_input):
         if isinstance(image_input, (str, Path)):
@@ -53,81 +93,69 @@ class ImageDeepfakeDetector:
     def predict(self, image_input) -> dict:
         img = self._load_image(image_input)
         tensor = self.transform(img).unsqueeze(0).to(self.device)
-
         with torch.no_grad():
             logits = self.model(tensor)
             probs = torch.softmax(logits, dim=-1)
             pred_idx = probs.argmax(dim=-1).item()
             confidence = probs[0][pred_idx].item()
-
-        return {
-            "label": self.labels[pred_idx],
-            "confidence": round(confidence, 4),
-        }
+        return {"label": self.labels[pred_idx], "confidence": round(confidence, 4)}
 
     def explain(self, image_input) -> dict:
-        """Predict with Grad-CAM heatmap showing which regions drive the classification."""
         img = self._load_image(image_input)
         tensor = self.transform(img).unsqueeze(0).to(self.device)
 
-        # timm EfficientNet: last conv is conv_head
-        target_layer = self.model.conv_head
+        # Use Grad-CAM on last conv layer
+        if self.arch == "efficientnet":
+            target_layer = self.model.conv_head
+        else:
+            # For CNN: use last conv in features
+            target_layer = self.model.features[-4]  # Conv2d(64,128)
 
-        # Hook to capture gradients and activations
         activations = []
         gradients = []
 
-        def forward_hook(module, input, output):
+        def fwd_hook(module, input, output):
             activations.append(output.detach())
-
-        def backward_hook(module, grad_input, grad_output):
+        def bwd_hook(module, grad_input, grad_output):
             gradients.append(grad_output[0].detach())
 
-        handle_fwd = target_layer.register_forward_hook(forward_hook)
-        handle_bwd = target_layer.register_full_backward_hook(backward_hook)
+        h1 = target_layer.register_forward_hook(fwd_hook)
+        h2 = target_layer.register_full_backward_hook(bwd_hook)
 
-        # Forward + backward for predicted class
         self.model.zero_grad()
         logits = self.model(tensor)
         pred_idx = logits.argmax(dim=-1).item()
         logits[0, pred_idx].backward()
 
-        # Compute Grad-CAM
-        act = activations[0].squeeze(0)  # (C, H, W)
-        grad = gradients[0].squeeze(0)   # (C, H, W)
-        weights = grad.mean(dim=(1, 2))  # (C,)
+        act = activations[0].squeeze(0)
+        grad = gradients[0].squeeze(0)
+        weights = grad.mean(dim=(1, 2))
 
         cam = torch.zeros(act.shape[1:], device=act.device)
         for i, w in enumerate(weights):
             cam += w * act[i]
         cam = torch.relu(cam)
-
-        # Normalize to 0-1
         cam = cam - cam.min()
         if cam.max() > 0:
             cam = cam / cam.max()
 
-        # Resize to original image size
         cam_np = cam.cpu().numpy()
-        cam_resized = cv2.resize(cam_np, (224, 224))
-
-        # Create heatmap overlay
+        img_size = 64 if self.arch == "cnn" else 224
+        cam_resized = cv2.resize(cam_np, (img_size, img_size))
         cam_uint8 = np.uint8(cam_resized * 255)
         heatmap = cv2.applyColorMap(cam_uint8, cv2.COLORMAP_JET)
         heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
 
-        # Overlay on original image
-        img_resized = np.array(img.resize((224, 224)))
+        img_resized = np.array(img.resize((img_size, img_size)))
         overlay = np.uint8(img_resized * 0.5 + heatmap * 0.5)
 
-        # Encode as base64 PNG
         overlay_pil = Image.fromarray(overlay)
         buf = io.BytesIO()
         overlay_pil.save(buf, format="PNG")
         heatmap_b64 = base64.b64encode(buf.getvalue()).decode()
 
-        handle_fwd.remove()
-        handle_bwd.remove()
+        h1.remove()
+        h2.remove()
 
         confidence = torch.softmax(logits, dim=-1)[0, pred_idx].item()
         return {

@@ -24,13 +24,20 @@ class VideoDeepfakeDetector:
         self.path = Path(weights_path) if weights_path else MODEL_DIR
         self.max_frames = max_frames
 
-        self.model = VideoDeepfakeModel(num_classes=2)
+        # Try hidden_dim=64 first (retrained model), fall back to 128 (original)
+        self.model = VideoDeepfakeModel(num_classes=2, hidden_dim=64)
 
         weights_file = self.path / "model.pth"
         if weights_file.exists():
-            state_dict = torch.load(weights_file, map_location=self.device)
-            self.model.load_state_dict(state_dict)
-            print("Loaded trained video weights")
+            state_dict = torch.load(weights_file, map_location=self.device, weights_only=True)
+            try:
+                self.model.load_state_dict(state_dict)
+                print("Loaded trained video weights (hidden=64)")
+            except RuntimeError:
+                # Fall back to original architecture
+                self.model = VideoDeepfakeModel(num_classes=2, hidden_dim=128)
+                self.model.load_state_dict(state_dict)
+                print("Loaded trained video weights (hidden=128)")
         else:
             print(f"No weights at {weights_file}, using untrained model")
 
