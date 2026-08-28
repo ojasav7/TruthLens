@@ -22,8 +22,12 @@ class SecurityEvent:
     details: dict
     source_ip: str | None = None
     timestamp: str = ""
+    id: str = ""
 
     def __post_init__(self):
+        import uuid as _uuid
+        if not self.id:
+            self.id = _uuid.uuid4().hex[:12]
         if not self.timestamp:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 

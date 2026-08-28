@@ -205,7 +205,7 @@ class ExplanationQualityRequest(BaseModel):
 @router.post("/explanation-quality")
 async def check_explanation_quality(body: ExplanationQualityRequest):
     """Verify an explanation is supported by evidence."""
-    from backend.services.explanation_quality import verify_explanation
+    from backend.services.explanation_engine import verify_explanation
     return verify_explanation(**body.model_dump())
 
 

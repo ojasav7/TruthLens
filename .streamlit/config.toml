@@ -1,4 +1,5 @@
 [theme]
+base = "dark"
 primaryColor = "#06b6d4"
 backgroundColor = "#0f172a"
 secondaryBackgroundColor = "#1e293b"
@@ -8,10 +9,7 @@ font = "sans serif"
 [server]
 headless = true
 enableCORS = false
-enableXsrfProtection = false
+enableXsrfProtection = true
 
 [browser]
 gatherUsageStats = false
-
-[runner]
-magicEnabled = false

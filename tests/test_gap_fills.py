@@ -84,12 +84,12 @@ class TestWebhooks:
         assert resp.status_code == 200
 
     def test_format_slack(self):
-        from backend.services.webhook_integrations import _format_slack
+        from backend.services.webhook_service import _format_slack
         result = _format_slack("alert", {"verdict": "High Risk", "threat_score": 85, "message": "test"})
         assert "blocks" in result
 
     def test_format_discord(self):
-        from backend.services.webhook_integrations import _format_discord
+        from backend.services.webhook_service import _format_discord
         result = _format_discord("alert", {"verdict": "Low", "threat_score": 15})
         assert "embeds" in result
 

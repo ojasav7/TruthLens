@@ -1,0 +1,37 @@
+{
+  "name": "truthlens",
+  "displayName": "TruthLens — Misinformation Detector",
+  "description": "Analyze selected text for misinformation and AI-generated content directly in VS Code",
+  "version": "1.0.0",
+  "publisher": "truthlens",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:truthlens.analyze"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "truthlens.analyze",
+        "title": "TruthLens: Analyze Selected Text"
+      },
+      {
+        "command": "truthlens.analyzeFile",
+        "title": "TruthLens: Analyze Active File"
+      },
+      {
+        "command": "truthlens.setApiUrl",
+        "title": "TruthLens: Set API URL"
+      }
+    ],
+    "configuration": {
+      "title": "TruthLens",
+      "properties": {
+        "truthlens.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "TruthLens API URL"
+        }
+      }
+    }
+  }
+}

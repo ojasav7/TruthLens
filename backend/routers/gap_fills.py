@@ -62,19 +62,19 @@ class WebhookRegisterRequest(BaseModel):
 
 @router.post("/webhooks")
 async def register_webhook(body: WebhookRegisterRequest):
-    from backend.services.webhook_integrations import register_webhook
-    return register_webhook(body.name, body.url, body.platform, body.events)
+    from backend.services.webhook_service import register_webhook
+    return register_webhook(body.url, body.name, body.events)
 
 
 @router.get("/webhooks")
 async def list_webhooks():
-    from backend.services.webhook_integrations import list_webhooks
+    from backend.services.webhook_service import list_webhooks
     return list_webhooks()
 
 
 @router.delete("/webhooks/{webhook_id}")
 async def delete_webhook(webhook_id: str):
-    from backend.services.webhook_integrations import remove_webhook
+    from backend.services.webhook_service import remove_webhook
     if not remove_webhook(webhook_id):
         raise HTTPException(404, "Webhook not found")
     return {"status": "deleted"}
@@ -82,7 +82,7 @@ async def delete_webhook(webhook_id: str):
 
 @router.post("/webhooks/test")
 async def test_webhook():
-    from backend.services.webhook_integrations import dispatch_webhook
+    from backend.services.webhook_service import dispatch_webhook
     return dispatch_webhook("alert", {"verdict": "High Risk", "threat_score": 85, "message": "Test alert from TruthLens"})
 
 
@@ -213,7 +213,7 @@ async def generate_forensic_report(body: ForensicReportRequest):
 
 @router.post("/webhook/dispatch")
 async def dispatch_webhook_event(event_type: str = "alert"):
-    from backend.services.webhook_integrations import dispatch_webhook
+    from backend.services.webhook_service import dispatch_webhook
     return dispatch_webhook(event_type, {"verdict": "High Risk", "threat_score": 85, "message": f"TruthLens {event_type}"})
 
 
@@ -264,7 +264,7 @@ async def deployment_info():
             "social_monitoring": True,
             "gdpr_compliance": True,
             "prometheus_metrics": True,
-            "webhook_integrations": True,
+            "webhooks": True,
             "whatsapp_bot": True,
             "browser_extension": True,
         },

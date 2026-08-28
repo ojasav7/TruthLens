@@ -27,7 +27,7 @@ def register_webhook(url: str, name: str = "", events: list[str] | None = None) 
         "last_triggered": None,
         "trigger_count": 0,
     }
-    return {"webhook_id": webhook_id, "status": "registered"}
+    return {"id": webhook_id, "webhook_id": webhook_id, "status": "registered"}
 
 
 def list_webhooks() -> list[dict]:
@@ -83,6 +83,28 @@ def send_notification(event: str, payload: dict) -> dict:
             results[wh_id] = {"delivered": False, "error": str(e)}
 
     return results
+
+
+def _format_slack(event_type: str, payload: dict) -> dict:
+    """Format payload for Slack incoming webhook."""
+    fields = [{"type": "mrkdwn", "text": f"*{event_type.replace('_', ' ').title()}*"}]
+    for k, v in payload.items():
+        fields.append({"type": "mrkdwn", "text": f"*{k}:* {v}"})
+    return {"blocks": [{"type": "section", "text": fields[0]}, {"type": "section", "fields": fields[1:]}] if len(fields) > 1 else [{"type": "section", "text": fields[0]}]}
+
+
+def _format_discord(event_type: str, payload: dict) -> dict:
+    """Format payload for Discord webhook."""
+    fields = []
+    for k, v in payload.items():
+        fields.append({"name": k, "value": str(v), "inline": True})
+    return {"embeds": [{"title": event_type.replace('_', ' ').title(), "fields": fields}]}
+
+
+def dispatch_webhook(event_type: str, payload: dict) -> dict:
+    """Format and dispatch webhook to all registered URLs for an event type."""
+    slack_payload = _format_slack(event_type, payload)
+    return send_notification(event_type, slack_payload)
 
 
 def notify_high_risk(analysis: dict) -> dict:

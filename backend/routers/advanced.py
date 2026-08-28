@@ -112,7 +112,7 @@ async def get_radar():
 async def explain_human(case_id: str):
     """Get plain-English explanation for an investigation."""
     from backend.services.investigation_service import InvestigationService
-    from backend.services.human_explainer import explain_investigation
+    from backend.services.explanation_engine import explain_investigation
 
     inv = InvestigationService()
     result = await inv.get_investigation(case_id)

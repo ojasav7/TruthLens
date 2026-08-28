@@ -193,7 +193,7 @@ class TestDecisionMatrix:
 
 class TestExplanationQuality:
     def test_supported_explanation(self):
-        from backend.services.explanation_quality import verify_explanation
+        from backend.services.explanation_engine import verify_explanation
         result = verify_explanation(
             "Video shows manipulation",
             has_model_signal=True, has_evidence=True, has_provenance=True,
@@ -201,7 +201,7 @@ class TestExplanationQuality:
         assert result["is_supported"] is True
 
     def test_unsupported_explanation(self):
-        from backend.services.explanation_quality import verify_explanation
+        from backend.services.explanation_engine import verify_explanation
         result = verify_explanation("This is fake", has_model_signal=False, has_evidence=False)
         assert result["is_supported"] is False
         assert result["warning"] is not None
