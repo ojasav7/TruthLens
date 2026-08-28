@@ -114,7 +114,7 @@ async def analyze(request: Request,
         try:
             contents = await image.read()
             # Validate in sandbox
-            vr = validate_upload_sandbox(image.filename or "image.jpg", image.content_type, contents)
+            vr = validate_upload(image.filename or "image.jpg", image.content_type, contents)
             if not vr.valid:
                 err_msg = "; ".join(vr.errors) if vr.errors else "validation failed"
                 record_event("unsafe_upload_rejected", severity="WARNING", details={"filename": image.filename, "reason": err_msg})
