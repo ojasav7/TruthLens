@@ -43,7 +43,25 @@ class ImageDeepfakeDetector:
         self.labels = ["real", "fake"]
         self.arch = None  # "cnn" or "efficientnet"
 
-        # Try v3 weights first (fast CNN)
+        # Try realistic weights first (trained on realistic synthetic data)
+        realistic_path = self.path / "model_realistic.pth"
+        if realistic_path.exists():
+            self.arch = "cnn"
+            self.model = ImageCNN()
+            state = torch.load(realistic_path, map_location=self.device, weights_only=True)
+            self.model.load_state_dict(state)
+            self.model.to(self.device)
+            self.model.eval()
+            self.labels = ["real", "fake"]
+            self.transform = transforms.Compose([
+                transforms.Resize((64, 64)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ])
+            print("[Image] Loaded realistic CNN weights (64x64)")
+            return
+
+        # Try v3 weights (fast CNN)
         v3_path = self.path / "model_v3.pth"
         if v3_path.exists():
             self.arch = "cnn"
