@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import {
-  FileText,
-  Image,
+  Type,
+  Image as ImageIcon,
   Film,
-  Music,
-  Search,
+  Mic,
+  Upload,
+  X,
 } from "lucide-react";
 
 interface InputPanelProps {
@@ -14,169 +15,183 @@ interface InputPanelProps {
     video?: File;
     audio?: File;
   }) => void;
-  disabled?: boolean;
+  loading: boolean;
 }
 
 const tabs = [
-  { id: "text", label: "Text", icon: FileText, emoji: "📝" },
-  { id: "image", label: "Image", icon: Image, emoji: "🖼️" },
-  { id: "video", label: "Video", icon: Film, emoji: "🎬" },
-  { id: "audio", label: "Audio", icon: Music, emoji: "🔊" },
+  { id: "text", label: "Text", icon: Type },
+  { id: "image", label: "Image", icon: ImageIcon },
+  { id: "video", label: "Video", icon: Film },
+  { id: "audio", label: "Audio", icon: Mic },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
 
-export default function InputPanel({ onAnalyze, disabled }: InputPanelProps) {
+export default function InputPanel({ onAnalyze, loading }: InputPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("text");
   const [text, setText] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const imageRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLInputElement>(null);
-  const audioRef = useRef<HTMLInputElement>(null);
-
-  const handleAnalyze = () => {
-    const data: {
-      text?: string;
-      image?: File;
-      video?: File;
-      audio?: File;
-    } = {};
-    if (text.trim()) data.text = text.trim();
-    if (imageFile) data.image = imageFile;
-    if (videoFile) data.video = videoFile;
-    if (audioFile) data.audio = audioFile;
-    if (Object.keys(data).length > 0) onAnalyze(data);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      handleAnalyze();
+  const handleSubmit = () => {
+    if (activeTab === "text" && text.trim()) {
+      onAnalyze({ text: text.trim() });
+    } else if (file) {
+      const key = activeTab as "image" | "video" | "audio";
+      onAnalyze({ [key]: file });
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    setFile(f);
+  };
+
+  const canSubmit =
+    (activeTab === "text" && text.trim().length > 0) ||
+    (activeTab !== "text" && file !== null);
+
   return (
-    <aside
-      className="w-80 shrink-0 bg-bg-surface border-r border-border-default p-5 flex flex-col gap-4"
-      onKeyDown={handleKeyDown}
-    >
-      <h2 className="text-sm font-bold uppercase tracking-wider text-text-primary">
-        📝 Analysis Input
-      </h2>
+    <div className="bg-card border border-border p-6">
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="font-mono text-[10px] text-primary uppercase tracking-widest">
+          Analysis Input
+        </div>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-px bg-border border border-border mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
+            onClick={() => {
+              setActiveTab(tab.id);
+              setFile(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest transition-colors cursor-pointer border-none ${
               activeTab === tab.id
-                ? "bg-cyan-glow border-cyan text-cyan"
-                : "bg-bg-surface border-border-default text-text-secondary hover:border-border-active hover:text-text-primary"
+                ? "bg-primary text-primary-foreground"
+                : "bg-background text-muted-foreground hover:bg-primary/5"
             }`}
           >
-            {tab.emoji} {tab.label}
+            <tab.icon className="size-3" />
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Input Area */}
-      <div className="flex-1">
+      {/* Tab Content */}
+      <div className="mb-6">
         {activeTab === "text" && (
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Paste suspicious news, headline, or social media post…"
-            className="w-full h-40 p-3 text-sm text-text-primary bg-bg-surface border border-border-default rounded-lg resize-none focus:border-cyan focus:ring-2 focus:ring-cyan-glow focus:outline-none placeholder:text-text-tertiary transition-all"
-          />
-        )}
-
-        {activeTab === "image" && (
-          <div
-            onClick={() => imageRef.current?.click()}
-            className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border-default rounded-xl cursor-pointer hover:border-cyan transition-colors"
-          >
-            <Image className="w-8 h-8 text-text-tertiary mb-2" />
-            {imageFile ? (
-              <span className="text-sm text-cyan font-medium">{imageFile.name}</span>
-            ) : (
-              <span className="text-sm text-text-tertiary">Click to upload image</span>
-            )}
-            <input
-              ref={imageRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+          <div>
+            <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2">
+              Text Content
+            </label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste suspicious text, news headline, or social media post..."
+              className="w-full h-40 bg-background border border-border p-4 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:border-primary focus:outline-none transition-colors font-sans"
             />
+            <div className="flex justify-between mt-2">
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {text.length} chars · {text.split(/\s+/).filter(Boolean).length} words
+              </span>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                Max 10,000
+              </span>
+            </div>
           </div>
         )}
 
-        {activeTab === "video" && (
-          <div
-            onClick={() => videoRef.current?.click()}
-            className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border-default rounded-xl cursor-pointer hover:border-cyan transition-colors"
-          >
-            <Film className="w-8 h-8 text-text-tertiary mb-2" />
-            {videoFile ? (
-              <span className="text-sm text-cyan font-medium">{videoFile.name}</span>
+        {activeTab !== "text" && (
+          <div>
+            <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2">
+              {activeTab === "image" ? "Image File" : activeTab === "video" ? "Video File" : "Audio File"}
+            </label>
+            {file ? (
+              <div className="flex items-center justify-between bg-background border border-primary p-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 bg-primary/10 flex items-center justify-center">
+                    {activeTab === "image" && <ImageIcon className="size-4 text-primary" />}
+                    {activeTab === "video" && <Film className="size-4 text-primary" />}
+                    {activeTab === "audio" && <Mic className="size-4 text-primary" />}
+                  </div>
+                  <div>
+                    <div className="text-sm text-foreground font-medium truncate max-w-[200px]">
+                      {file.name}
+                    </div>
+                    <div className="font-mono text-[10px] text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFile(null)}
+                  className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-none"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
             ) : (
-              <span className="text-sm text-text-tertiary">Click to upload video</span>
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="w-full h-32 border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer bg-transparent"
+              >
+                <Upload className="size-6 text-muted-foreground" />
+                <div className="text-sm text-muted-foreground">
+                  Drop file or click to upload
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  {activeTab === "image"
+                    ? "PNG, JPG, WebP — Max 20MB"
+                    : activeTab === "video"
+                    ? "MP4, MOV, AVI — Max 100MB"
+                    : "WAV, MP3, FLAC — Max 50MB"}
+                </div>
+              </button>
             )}
             <input
-              ref={videoRef}
+              ref={fileRef}
               type="file"
-              accept="video/*"
+              accept={
+                activeTab === "image"
+                  ? "image/*"
+                  : activeTab === "video"
+                  ? "video/*"
+                  : "audio/*"
+              }
+              onChange={handleFileChange}
               className="hidden"
-              onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-            />
-          </div>
-        )}
-
-        {activeTab === "audio" && (
-          <div
-            onClick={() => audioRef.current?.click()}
-            className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border-default rounded-xl cursor-pointer hover:border-cyan transition-colors"
-          >
-            <Music className="w-8 h-8 text-text-tertiary mb-2" />
-            {audioFile ? (
-              <span className="text-sm text-cyan font-medium">{audioFile.name}</span>
-            ) : (
-              <span className="text-sm text-text-tertiary">Click to upload audio</span>
-            )}
-            <input
-              ref={audioRef}
-              type="file"
-              accept="audio/*"
-              className="hidden"
-              onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
             />
           </div>
         )}
       </div>
 
-      {activeTab === "text" && text && (
-        <p className="text-xs text-text-tertiary" style={{ fontVariantNumeric: "tabular-nums" }}>
-          📊 {text.length} characters · {text.split(/\s+/).filter(Boolean).length} words
-        </p>
-      )}
-
-      <div className="border-t border-border-default" />
-
       {/* Analyze Button */}
       <button
-        onClick={handleAnalyze}
-        disabled={disabled}
-        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-white bg-cyan rounded-lg hover:bg-cyan-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={handleSubmit}
+        disabled={!canSubmit || loading}
+        className={`w-full py-3 font-mono text-[10px] uppercase tracking-widest font-bold transition-all cursor-pointer border-none ${
+          canSubmit && !loading
+            ? "bg-primary text-primary-foreground hover:brightness-110"
+            : "bg-muted text-muted-foreground cursor-not-allowed"
+        }`}
       >
-        <Search className="w-4 h-4" />
-        Analyze
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="size-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
+            Analyzing…
+          </span>
+        ) : (
+          "Start Scan"
+        )}
       </button>
-      <p className="text-xs text-text-tertiary text-center">⌨️ Ctrl+Enter to analyze</p>
-    </aside>
+
+      <div className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
+        Ctrl+Enter to trigger
+      </div>
+    </div>
   );
 }

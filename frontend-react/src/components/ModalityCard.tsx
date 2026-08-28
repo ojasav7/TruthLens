@@ -1,63 +1,70 @@
+import { Type, Image as ImageIcon, Film, Mic } from "lucide-react";
+
 interface ModalityCardProps {
-  modality: string;
+  type: string;
   label: string;
   confidence: number;
-  threat: number;
+  threatContribution: number;
 }
 
-const icons: Record<string, string> = {
-  TEXT: "📝",
-  IMAGE: "🖼️",
-  VIDEO: "🎬",
-  AUDIO: "🔊",
+const iconMap: Record<string, typeof Type> = {
+  text: Type,
+  image: ImageIcon,
+  video: Film,
+  audio: Mic,
+};
+
+const numMap: Record<string, string> = {
+  text: "01",
+  image: "02",
+  video: "03",
+  audio: "04",
 };
 
 export default function ModalityCard({
-  modality,
+  type,
   label,
   confidence,
-  threat,
+  threatContribution,
 }: ModalityCardProps) {
-  const confPct = (confidence || 0) * 100;
-  const threatPct = (threat || 0) * 100;
-  const isFake = label === "fake" || label === "cloned";
-  const color = isFake ? "var(--color-crimson)" : "var(--color-emerald)";
-  const chipClass = isFake
-    ? "bg-crimson/12 text-crimson border-crimson/30"
-    : "bg-emerald/12 text-emerald border-emerald/30";
+  const Icon = iconMap[type] || Type;
+  const num = numMap[type] || "00";
+  const safeConf = Number.isFinite(confidence) ? confidence : 0;
+  const safeThreat = Number.isFinite(threatContribution) ? threatContribution : 0;
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-bg-surface border border-border-default rounded-xl transition-all hover:border-border-active hover:shadow-md animate-fade-in-up">
-      <span className="text-2xl shrink-0">{icons[modality] || "📄"}</span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="font-semibold text-text-primary">{modality}</span>
-          <span
-            className={`px-2.5 py-0.5 text-xs font-semibold uppercase rounded-full border ${chipClass}`}
-          >
-            {label}
-          </span>
-        </div>
-        <div className="w-full h-1.5 bg-bg-primary rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${confPct}%`, background: color }}
-          />
-        </div>
-        <div className="flex justify-between mt-1">
-          <span
-            className="text-xs text-text-tertiary"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            Confidence: {confPct.toFixed(0)}%
-          </span>
-          <span
-            className="text-xs text-text-tertiary"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            Threat: {threatPct.toFixed(0)}%
-          </span>
-        </div>
+    <div className="bg-background p-6 border border-border hover:border-primary/30 transition-colors">
+      <div className="flex items-center gap-3 mb-4">
+        <Icon className="size-4 text-primary" />
+        <span className="font-mono text-[10px] text-primary uppercase tracking-widest">
+          {num} / {label}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-muted-foreground">Confidence</span>
+        <span className="font-mono text-sm font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+          {(safeConf * 100).toFixed(1)}%
+        </span>
+      </div>
+      <div className="h-1.5 w-full bg-border rounded-full overflow-hidden mb-4">
+        <div
+          className="h-full bg-primary rounded-full transition-all duration-500"
+          style={{ width: `${safeConf * 100}%` }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Threat Contribution</span>
+        <span className="font-mono text-sm font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+          {safeThreat.toFixed(1)}%
+        </span>
+      </div>
+      <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+        <div
+          className="h-full bg-destructive rounded-full transition-all duration-500"
+          style={{ width: `${safeThreat}%` }}
+        />
       </div>
     </div>
   );

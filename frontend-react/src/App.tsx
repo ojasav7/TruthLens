@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, KeyboardEvent } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import InputPanel from "./components/InputPanel";
 import EmptyState from "./components/EmptyState";
 import ResultsPanel from "./components/ResultsPanel";
+import LandingPage from "./pages/LandingPage";
 import { API_URL } from "./lib/utils";
 
 interface AnalysisResult {
@@ -11,14 +13,21 @@ interface AnalysisResult {
   verdict: string;
   consistency: string;
   breakdown: Record<string, any>;
-  timestamp?: string;
+  trace_id?: string;
   input_types?: string[];
 }
 
-export default function App() {
+function Dashboard() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [backendStatus, setBackendStatus] = useState<"live" | "down" | "checking">("checking");
+
+  useEffect(() => {
+    fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
+      .then((r) => setBackendStatus(r.ok ? "live" : "down"))
+      .catch(() => setBackendStatus("down"));
+  }, []);
 
   const handleAnalyze = useCallback(
     async (data: { text?: string; image?: File; video?: File; audio?: File }) => {
@@ -52,31 +61,56 @@ export default function App() {
     []
   );
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.ctrlKey && e.key === "Enter" && !loading) {
+      // Trigger via InputPanel's own handler
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-bg-primary">
-      <Header />
-      <div className="flex flex-1 overflow-hidden">
-        <InputPanel onAnalyze={handleAnalyze} disabled={loading} />
+    <div className="min-h-screen bg-background text-foreground" onKeyDown={handleKeyDown}>
+      <Header backendStatus={backendStatus} />
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-[320px_1fr] gap-8">
+          {/* Sidebar */}
+          <aside>
+            <InputPanel onAnalyze={handleAnalyze} loading={loading} />
+          </aside>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          {loading && (
-            <div className="flex flex-col items-center justify-center h-full gap-4 animate-fade-in-up">
-              <div className="w-10 h-10 border-3 border-cyan border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-text-secondary">Analyzing across modalities…</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-3 p-4 bg-crimson/10 border border-crimson/30 rounded-lg text-crimson text-sm animate-fade-in-up">
-              ⚠️ {error}
-            </div>
-          )}
-
-          {!loading && !error && !result && <EmptyState />}
-
-          {!loading && result && <ResultsPanel result={result} />}
-        </main>
+          {/* Main */}
+          <main>
+            {error && (
+              <div className="bg-destructive/10 border border-destructive/30 p-4 mb-6 text-sm text-destructive-foreground font-mono">
+                {error}
+              </div>
+            )}
+            {result ? (
+              <ResultsPanel result={result} />
+            ) : (
+              !loading && <EmptyState />
+            )}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="size-12 border-2 border-border border-t-primary rounded-full animate-spin mb-4"></div>
+                <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                  Running forensic scan…
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
