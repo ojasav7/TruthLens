@@ -137,11 +137,11 @@ class ImageDeepfakeDetector:
     def predict(self, image_input) -> dict:
         img = self._load_image(image_input)
 
-        # Realism check: if this is a real photograph, the model (trained on
-        # synthetic data) cannot reliably classify it. Return early with a
-        # conservative "real" label + note.
-        is_photo = self._is_real_photo(img)
+        # Use ensemble detector for multi-signal analysis
+        from models.image.ensemble import ensemble_predict
+        result = ensemble_predict(img, cnn_model=self)
 
+        # Add CNN-specific details
         tensor = self.transform(img).unsqueeze(0).to(self.device)
         with torch.no_grad():
             logits = self.model(tensor)
@@ -149,25 +149,12 @@ class ImageDeepfakeDetector:
             pred_idx = probs.argmax(dim=-1).item()
             confidence = probs[0][pred_idx].item()
 
-        model_label = self.labels[pred_idx]
-
-        # If the image is a real photo but the model says "fake", the model
-        # is confused by unfamiliar textures. Override to "real" with reduced
-        # confidence and a note explaining why.
-        if is_photo and model_label == "fake":
-            return {
-                "label": "real",
-                "confidence": round(min(confidence, 0.85), 4),
-                "note": "Image appears to be a real photograph. Model is trained on synthetic data and may misclassify real photos.",
-                "model_raw": model_label,
-                "model_confidence": round(confidence, 4),
-            }
-
-        return {
-            "label": model_label,
+        result["cnn_raw"] = {
+            "label": self.labels[pred_idx],
             "confidence": round(confidence, 4),
-            "note": "Analysis based on synthetic deepfake artifact detection.",
         }
+
+        return result
 
     def explain(self, image_input) -> dict:
         img = self._load_image(image_input)
