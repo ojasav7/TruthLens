@@ -1,54 +1,78 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import heroScan from "../assets/hero-scan.jpg";
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard shortcut: Enter on focused buttons (accessibility skill)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && document.activeElement instanceof HTMLButtonElement) {
+        document.activeElement.click();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+      {/* Skip to main content link (accessibility skill) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:font-bold"
+      >
+        Skip to main content
+      </a>
+
+      {/* Navigation (semantic HTML per accessibility skill) */}
+      <nav aria-label="Main navigation" className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="size-6 bg-primary rounded-sm"></div>
-            <span className="font-mono font-bold tracking-tighter text-lg uppercase">
-              TruthLens
-            </span>
+            <a href="/" className="flex items-center gap-2 no-underline" aria-label="TruthLens home">
+              <div className="size-6 bg-primary rounded-sm" aria-hidden="true"></div>
+              <span className="font-mono font-bold tracking-tighter text-lg uppercase text-foreground">
+                TruthLens
+              </span>
+            </a>
           </div>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#protocols" className="hover:text-primary transition-colors">
+          <div className="hidden md:flex gap-8 text-sm font-medium text-muted-foreground" role="menubar">
+            <a href="#protocols" role="menuitem" className="hover:text-primary transition-colors">
               Protocols
             </a>
-            <a href="#intelligence" className="hover:text-primary transition-colors">
+            <a href="#intelligence" role="menuitem" className="hover:text-primary transition-colors">
               Intelligence
             </a>
-            <a href="#infrastructure" className="hover:text-primary transition-colors">
+            <a href="#infrastructure" role="menuitem" className="hover:text-primary transition-colors">
               Infrastructure
             </a>
           </div>
           <button
             onClick={() => navigate("/dashboard")}
-            className="px-4 py-1.5 bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:bg-primary transition-colors cursor-pointer"
+            className="px-4 py-1.5 bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:bg-primary transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Start a forensic scan — navigates to dashboard"
           >
             Start Scan
           </button>
         </div>
       </nav>
 
-      <main className="relative">
-        <div className="absolute inset-0 bg-dots pointer-events-none"></div>
+      <main id="main-content" className="relative">
+        <div className="absolute inset-0 bg-dots pointer-events-none" aria-hidden="true"></div>
 
         {/* Hero Section */}
-        <section className="relative pt-24 pb-32 overflow-hidden">
+        <section ref={heroRef} className="relative pt-24 pb-32 overflow-hidden" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
             <div style={{ animation: "fadeIn 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-              <div className="inline-flex items-center gap-2 px-2 py-1 bg-primary/10 border border-primary/20 rounded-sm mb-6">
-                <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-2 py-1 bg-primary/10 border border-primary/20 rounded-sm mb-6" role="status" aria-label="System status: active version 4.0.2">
+                <span className="size-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true"></span>
                 <span className="text-[10px] font-mono text-primary uppercase tracking-widest">
                   System Active: v4.0.2
                 </span>
               </div>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tighter text-balance leading-[0.9] mb-8">
+              <h1 id="hero-heading" className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tighter text-balance leading-[0.9] mb-8">
                 THE FORENSIC <span className="text-primary">STANDARD</span> FOR
                 MEDIA AUTHENTICITY.
               </h1>
@@ -60,7 +84,8 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <button
                   onClick={() => navigate("/dashboard")}
-                  className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all cursor-pointer"
+                  className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label="Deploy your own TruthLens instance — opens dashboard"
                 >
                   Deploy Instance
                 </button>
@@ -68,7 +93,8 @@ export default function LandingPage() {
                   href="http://127.0.0.1:8000/docs"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-8 py-4 border border-border font-bold uppercase tracking-widest text-sm hover:bg-border transition-all inline-block text-foreground no-underline"
+                  className="px-8 py-4 border border-border font-bold uppercase tracking-widest text-sm hover:bg-border transition-all inline-block text-foreground no-underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label="Open API documentation in new tab"
                 >
                   Documentation
                 </a>
@@ -78,37 +104,45 @@ export default function LandingPage() {
             {/* Hero Result Card / Scan Visualization */}
             <div className="relative" style={{ animation: "fadeIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both" }}>
               <div className="relative bg-background border border-border p-1 shadow-2xl shadow-primary/5">
-                <div className="absolute -inset-4 border border-primary/10 -z-10"></div>
+                <div className="absolute -inset-4 border border-primary/10 -z-10" aria-hidden="true"></div>
                 <div className="w-full aspect-[4/3] bg-muted overflow-hidden relative group">
                   <img
                     src={heroScan}
-                    alt="Forensic scan visualization showing digital artifacts on a face"
+                    alt="Forensic scan visualization showing digital artifact detection on a face with threat score overlay"
                     className="w-full h-full object-cover"
+                    loading="eager"
+                    width="800"
+                    height="600"
                   />
-                  <div className="absolute inset-0 scan-line bg-gradient-to-b from-transparent via-primary/40 to-transparent h-1 w-full z-20"></div>
-                  <div className="absolute top-4 left-4 z-10 font-mono text-[10px] bg-background/60 p-2 backdrop-blur-sm border border-foreground/10">
+                  <div className="absolute inset-0 scan-line bg-gradient-to-b from-transparent via-primary/40 to-transparent h-1 w-full z-20" aria-hidden="true"></div>
+                  <div className="absolute top-4 left-4 z-10 font-mono text-[10px] bg-background/60 p-2 backdrop-blur-sm border border-foreground/10" aria-hidden="true">
                     [ FRAME_ID: 0x82A1 ]<br />
                     [ LATENCY: 12ms ]
                   </div>
                 </div>
 
                 {/* Floating Result Badge */}
-                <div className="absolute -bottom-8 -right-4 sm:-right-8 w-60 sm:w-64 bg-background border border-primary p-5 sm:p-6 shadow-2xl" style={{ animation: "slideUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.8s both" }}>
+                <div
+                  className="absolute -bottom-8 -right-4 sm:-right-8 w-60 sm:w-64 bg-background border border-primary p-5 sm:p-6 shadow-2xl"
+                  style={{ animation: "slideUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.8s both" }}
+                  role="status"
+                  aria-label="Sample threat score: 84.2 percent, verdict: High Risk Artifacts"
+                >
                   <div className="flex justify-between items-start mb-4">
                     <span className="font-mono text-[10px] text-muted-foreground uppercase">
                       Threat Score
                     </span>
-                    <span className="text-primary font-mono font-bold">
+                    <span className="text-primary font-mono font-bold" style={{ fontVariantNumeric: "tabular-nums" }}>
                       84.2%
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-border rounded-full overflow-hidden mb-4">
+                  <div className="h-1.5 w-full bg-border rounded-full overflow-hidden mb-4" role="progressbar" aria-valuenow={84} aria-valuemin={0} aria-valuemax={100} aria-label="Threat score progress">
                     <div className="h-full bg-primary w-[84%]"></div>
                   </div>
                   <div className="text-xs font-bold uppercase tracking-wider text-primary">
                     Verdict: High Risk Artifacts
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border flex gap-2">
+                  <div className="mt-4 pt-4 border-t border-border flex gap-2" aria-hidden="true">
                     <div className="size-2 bg-primary"></div>
                     <div className="size-2 bg-primary"></div>
                     <div className="size-2 bg-primary"></div>
@@ -121,10 +155,10 @@ export default function LandingPage() {
         </section>
 
         {/* Modality Grid */}
-        <section id="protocols" className="py-24 border-t border-border">
+        <section id="protocols" className="py-24 border-t border-border" aria-labelledby="modality-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
-              <h2 className="text-4xl font-extrabold tracking-tighter uppercase">
+              <h2 id="modality-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
                 Modality Coverage
               </h2>
               <p className="max-w-xs text-sm text-muted-foreground font-mono uppercase leading-relaxed tracking-tighter">
@@ -133,64 +167,34 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border">
-              <div className="bg-background p-8 group hover:bg-primary/5 transition-colors">
-                <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
-                  01 / Text
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border" role="list">
+              {[
+                { num: "01", title: "NLP Semantic Analysis", desc: "BERT-driven classification of fake news, bias detection, and cross-source verification." },
+                { num: "02", title: "Diffusion Forensics", desc: "CNN detection of GAN and Stable Diffusion artifacts in sub-frame level." },
+                { num: "03", title: "Temporal Deepfake", desc: "MobileNetV2 + LSTM consistency checks revealing unnatural frame transitions and lip-sync errors." },
+                { num: "04", title: "Voice Clone ID", desc: "1D-CNN raw waveform analysis to identify frequency anomalies in AI-generated voice." },
+              ].map((item) => (
+                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors" role="listitem">
+                  <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
+                    {item.num}
+                  </div>
+                  <h3 className="text-xl font-bold mb-4 uppercase">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.desc}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold mb-4 uppercase">
-                  NLP Semantic Analysis
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  BERT-driven classification of fake news, bias detection, and
-                  cross-source verification.
-                </p>
-              </div>
-              <div className="bg-background p-8 group hover:bg-primary/5 transition-colors">
-                <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
-                  02 / Image
-                </div>
-                <h3 className="text-xl font-bold mb-4 uppercase">
-                  Diffusion Forensics
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  CNN detection of GAN and Stable Diffusion artifacts
-                  in sub-frame level.
-                </p>
-              </div>
-              <div className="bg-background p-8 group hover:bg-primary/5 transition-colors">
-                <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
-                  03 / Video
-                </div>
-                <h3 className="text-xl font-bold mb-4 uppercase">
-                  Temporal Deepfake
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  MobileNetV2 + LSTM consistency checks revealing unnatural frame
-                  transitions and lip-sync errors.
-                </p>
-              </div>
-              <div className="bg-background p-8 group hover:bg-primary/5 transition-colors">
-                <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
-                  04 / Audio
-                </div>
-                <h3 className="text-xl font-bold mb-4 uppercase">
-                  Voice Clone ID
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  1D-CNN raw waveform analysis to identify frequency anomalies in
-                  AI-generated voice.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Intelligence Section */}
-        <section id="intelligence" className="py-24 border-t border-border">
+        <section id="intelligence" className="py-24 border-t border-border" aria-labelledby="intelligence-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
-              <h2 className="text-4xl font-extrabold tracking-tighter uppercase">
+              <h2 id="intelligence-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
                 Intelligence Layer
               </h2>
               <p className="max-w-xs text-sm text-muted-foreground font-mono uppercase leading-relaxed tracking-tighter">
@@ -198,7 +202,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-px bg-border border border-border">
+            <div className="grid md:grid-cols-3 gap-px bg-border border border-border" role="list">
               {[
                 { num: "05", title: "Evidence Ledger", desc: "Cryptographic chain of custody for every analysis. Tamper-proof audit trail with timestamped hashing." },
                 { num: "06", title: "Provenance Tracking", desc: "C2PA content credentials, EXIF forensics, and source credibility scoring for media lineage." },
@@ -207,7 +211,7 @@ export default function LandingPage() {
                 { num: "09", title: "Drift Monitor", desc: "Real-time model performance tracking with automatic alerts on accuracy degradation." },
                 { num: "10", title: "Case Management", desc: "Organize investigations into cases with timeline views, reviewer assignment, and status tracking." },
               ].map((item) => (
-                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors">
+                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors" role="listitem">
                   <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
                     {item.num}
                   </div>
@@ -224,10 +228,10 @@ export default function LandingPage() {
         </section>
 
         {/* Infrastructure Section */}
-        <section id="infrastructure" className="py-24 border-t border-border">
+        <section id="infrastructure" className="py-24 border-t border-border" aria-labelledby="infra-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
-              <h2 className="text-4xl font-extrabold tracking-tighter uppercase">
+              <h2 id="infra-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
                 Infrastructure
               </h2>
               <p className="max-w-xs text-sm text-muted-foreground font-mono uppercase leading-relaxed tracking-tighter">
@@ -237,32 +241,36 @@ export default function LandingPage() {
 
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: "🛡", title: "Secure Sandbox", items: ["Upload validation", "MIME + magic bytes", "Privacy mode", "Data retention policies"] },
-                { icon: "📊", title: "Observability", items: ["Prometheus metrics", "Trace IDs per analysis", "System health checks", "Performance monitoring"] },
-                { icon: "🚀", title: "Deployment", items: ["Docker ready", "Kubernetes manifests", "Chrome extension", "Telegram / Slack / Discord bots"] },
+                { icon: "shield", title: "Secure Sandbox", items: ["Upload validation", "MIME + magic bytes", "Privacy mode", "Data retention policies"] },
+                { icon: "chart", title: "Observability", items: ["Prometheus metrics", "Trace IDs per analysis", "System health checks", "Performance monitoring"] },
+                { icon: "rocket", title: "Deployment", items: ["Docker ready", "Kubernetes manifests", "Chrome extension", "Telegram / Slack / Discord bots"] },
               ].map((card) => (
-                <div key={card.title} className="bg-background border border-border p-8 hover:border-primary/30 transition-colors">
-                  <div className="text-3xl mb-4">{card.icon}</div>
+                <article key={card.title} className="bg-background border border-border p-8 hover:border-primary/30 transition-colors">
+                  <div className="text-3xl mb-4" aria-hidden="true">
+                    {card.icon === "shield" && "🛡"}
+                    {card.icon === "chart" && "📊"}
+                    {card.icon === "rocket" && "🚀"}
+                  </div>
                   <h3 className="text-xl font-bold mb-4 uppercase">{card.title}</h3>
                   <ul className="space-y-2">
                     {card.items.map((item) => (
                       <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="size-1 bg-primary rounded-full shrink-0"></span>
+                        <span className="size-1 bg-primary rounded-full shrink-0" aria-hidden="true"></span>
                         {item}
                       </li>
                     ))}
                   </ul>
-                </div>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
         {/* Data Readout / Trust */}
-        <section className="py-24 bg-foreground text-background">
+        <section className="py-24 bg-foreground text-background" aria-label="Platform statistics">
           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12">
             <div>
-              <div className="text-5xl font-extrabold tracking-tighter mb-2">
+              <div className="text-5xl font-extrabold tracking-tighter mb-2" style={{ fontVariantNumeric: "tabular-nums" }}>
                 95%+
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
@@ -270,7 +278,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div>
-              <div className="text-5xl font-extrabold tracking-tighter mb-2">
+              <div className="text-5xl font-extrabold tracking-tighter mb-2" style={{ fontVariantNumeric: "tabular-nums" }}>
                 100%
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
@@ -278,7 +286,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div>
-              <div className="text-5xl font-extrabold tracking-tighter mb-2">
+              <div className="text-5xl font-extrabold tracking-tighter mb-2" style={{ fontVariantNumeric: "tabular-nums" }}>
                 240
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
@@ -289,9 +297,9 @@ export default function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 border-t border-border">
+        <section className="py-24 border-t border-border" aria-labelledby="cta-heading">
           <div className="max-w-7xl mx-auto px-6 text-center">
-            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter uppercase mb-6">
+            <h2 id="cta-heading" className="text-4xl md:text-5xl font-extrabold tracking-tighter uppercase mb-6">
               Ready to Scan?
             </h2>
             <p className="max-w-lg mx-auto text-muted-foreground mb-10">
@@ -301,7 +309,8 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all cursor-pointer"
+                className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-sm hover:brightness-110 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label="Launch the TruthLens analysis dashboard"
               >
                 Launch Dashboard
               </button>
@@ -309,7 +318,8 @@ export default function LandingPage() {
                 href="http://127.0.0.1:8000/docs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 border border-border font-bold uppercase tracking-widest text-sm hover:bg-border transition-all inline-block text-foreground no-underline"
+                className="px-8 py-4 border border-border font-bold uppercase tracking-widest text-sm hover:bg-border transition-all inline-block text-foreground no-underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label="Open API reference documentation in new tab"
               >
                 API Reference
               </a>
@@ -318,10 +328,10 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border py-12">
+      <footer className="border-t border-border py-12" role="contentinfo">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2 grayscale">
-            <div className="size-4 bg-foreground rounded-sm"></div>
+            <div className="size-4 bg-foreground rounded-sm" aria-hidden="true"></div>
             <span className="font-mono font-bold tracking-tighter text-sm uppercase">
               TruthLens Ops
             </span>

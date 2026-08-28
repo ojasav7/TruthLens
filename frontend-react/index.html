@@ -1,13 +1,70 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f172a" />
-    <title>TruthLens — Forensic Intelligence</title>
+    <meta name="color-scheme" content="dark" />
+
+    <!-- SEO Meta Tags (from seo skill) -->
+    <title>TruthLens — Forensic Standard for Media Authenticity</title>
+    <meta name="description" content="TruthLens scores text, images, video, and audio for misinformation and deepfake risk, then explains the verdict with multimodal AI analysis. Deploy your own forensic intelligence platform." />
+    <meta name="keywords" content="deepfake detection, misinformation, AI detection, fake news, media forensics, text analysis, image analysis, video analysis, audio analysis" />
+    <meta name="author" content="TruthLens Systems" />
+    <meta name="robots" content="index, follow, max-snippet:200, max-image-preview:large" />
+    <link rel="canonical" href="https://truthlens.dev/" />
+
+    <!-- Open Graph (from seo skill) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TruthLens — Forensic Standard for Media Authenticity" />
+    <meta property="og:description" content="Multimodal threat detection for the synthetic media era. Surface deepfake artifacts across text, image, video, and voice." />
+    <meta property="og:url" content="https://truthlens.dev/" />
+    <meta property="og:site_name" content="TruthLens" />
+    <meta property="og:image" content="https://truthlens.dev/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card (from seo skill) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TruthLens — Forensic Standard for Media Authenticity" />
+    <meta name="twitter:description" content="Multimodal threat detection for the synthetic media era." />
+    <meta name="twitter:image" content="https://truthlens.dev/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%230f172a'/><circle cx='50' cy='50' r='28' fill='none' stroke='%2334d399' stroke-width='6'/><circle cx='50' cy='50' r='8' fill='%2334d399'/></svg>" />
+
+    <!-- Structured Data (JSON-LD) (from seo skill) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TruthLens",
+      "description": "Multimodal misinformation and deepfake detection platform with AI-powered forensic analysis.",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Web",
+      "url": "https://truthlens.dev",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Text fake news detection",
+        "Image deepfake detection",
+        "Video temporal analysis",
+        "Audio voice clone detection",
+        "Multimodal fusion scoring",
+        "Evidence ledger",
+        "Investigation mode"
+      ]
+    }
+    </script>
+
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
-  <body style="background:#0f172a; margin:0;">
+  <body style="background:oklch(0.15 0.035 264.5); margin:0;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

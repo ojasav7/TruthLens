@@ -14,11 +14,7 @@ export default function ThreatGauge({ score, size = 200 }: ThreatGaugeProps) {
   const endAngle = startAngle + angle;
   const rad = (deg: number) => (deg * Math.PI) / 180;
 
-  const arcPath = (
-    sa: number,
-    ea: number,
-    radius: number
-  ) => {
+  const arcPath = (sa: number, ea: number, radius: number) => {
     const sx = cx + radius * Math.cos(rad(sa));
     const sy = cy + radius * Math.sin(rad(sa));
     const ex = cx + radius * Math.cos(rad(ea));
@@ -35,7 +31,14 @@ export default function ThreatGauge({ score, size = 200 }: ThreatGaugeProps) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size * 0.6} viewBox={`0 0 ${size} ${size * 0.6}`}>
+      <svg
+        width={size}
+        height={size * 0.6}
+        viewBox={`0 0 ${size} ${size * 0.6}`}
+        role="img"
+        aria-label={`Threat gauge showing ${clamped.toFixed(1)}% threat score`}
+      >
+        <title>Threat Score Gauge</title>
         {/* Track */}
         <path
           d={arcPath(startAngle, 0, r)}
@@ -68,11 +71,11 @@ export default function ThreatGauge({ score, size = 200 }: ThreatGaugeProps) {
           x={cx}
           y={cy + 28}
           textAnchor="middle"
-          className="font-mono"
           fill="var(--color-foreground)"
           fontSize="11"
           fontFamily="var(--font-mono)"
           fontWeight="bold"
+          style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {clamped.toFixed(1)}%
         </text>

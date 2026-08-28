@@ -29,12 +29,12 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
     }));
 
   return (
-    <div className="space-y-8">
-      {/* Score Header — matches landing page floating badge style */}
+    <div className="space-y-8" role="region" aria-label="Analysis results">
+      {/* Score Header */}
       <div className="bg-card border border-border p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="font-mono text-[10px] text-primary uppercase tracking-widest mb-2">
+            <div className="font-mono text-[10px] text-primary uppercase tracking-widest mb-2" aria-hidden="true">
               Scan Complete
             </div>
             <h2 className="text-3xl font-extrabold tracking-tighter uppercase">
@@ -47,7 +47,14 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
         <div className="flex flex-col md:flex-row items-center gap-8">
           <ThreatGauge score={result.threat_score} size={200} />
           <div className="flex-1 w-full">
-            <div className="h-2 w-full bg-border rounded-full overflow-hidden mb-3">
+            <div
+              className="h-2 w-full bg-border rounded-full overflow-hidden mb-3"
+              role="progressbar"
+              aria-valuenow={Math.round(result.threat_score)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Threat score: ${result.threat_score.toFixed(1)} percent`}
+            >
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
@@ -78,17 +85,23 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
 
       {/* Modality Breakdown */}
       {modalities.length > 0 && (
-        <div>
-          <div className="font-mono text-[10px] text-primary uppercase tracking-widest mb-4">
+        <section aria-labelledby="breakdown-heading">
+          <div className="font-mono text-[10px] text-primary uppercase tracking-widest mb-4" id="breakdown-heading">
             Modality Breakdown
           </div>
-          <div className="grid md:grid-cols-2 gap-px bg-border border border-border">
+          <div className="grid md:grid-cols-2 gap-px bg-border border border-border" role="list">
             {modalities.map((m) => (
               <ModalityCard key={m.type} {...m} />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* Screen reader announcement (accessibility skill) */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        Analysis complete. Verdict: {result.verdict}. Threat score: {result.threat_score.toFixed(1)} percent.
+        {result.input_types && ` Analyzed modalities: ${result.input_types.join(", ")}.`}
+      </div>
     </div>
   );
 }

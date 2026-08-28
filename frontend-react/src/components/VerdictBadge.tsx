@@ -26,6 +26,8 @@ export default function VerdictBadge({ verdict }: VerdictBadgeProps) {
     <span
       className="inline-flex items-center px-4 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest"
       style={{ backgroundColor: bg, color: text }}
+      role="status"
+      aria-label={`Verdict: ${label}`}
     >
       {label}
     </span>
