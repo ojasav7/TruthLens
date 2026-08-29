@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, KeyboardEvent } from "react";
+import { useState, useCallback, useEffect } from "react";
+import type { KeyboardEvent } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import InputPanel from "./components/InputPanel";
@@ -24,9 +25,26 @@ function Dashboard() {
   const [backendStatus, setBackendStatus] = useState<"live" | "down" | "checking">("checking");
 
   useEffect(() => {
-    fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
-      .then((r) => setBackendStatus(r.ok ? "live" : "down"))
-      .catch(() => setBackendStatus("down"));
+    // Retry with backoff to handle race condition on first load
+    let cancelled = false;
+    const check = (attempt: number) => {
+      if (cancelled) return;
+      fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(5000) })
+        .then((r) => {
+          if (!cancelled) setBackendStatus(r.ok ? "live" : "down");
+        })
+        .catch(() => {
+          if (!cancelled && attempt < 3) {
+            setTimeout(() => check(attempt + 1), 1500 * (attempt + 1));
+          } else if (!cancelled) {
+            setBackendStatus("down");
+          }
+        });
+    };
+    check(0);
+    // Also poll every 30s to auto-recover
+    const interval = setInterval(() => check(0), 30000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const handleAnalyze = useCallback(
