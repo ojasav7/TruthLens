@@ -1,0 +1,11 @@
+{
+  "model": "distilbert-base-uncased",
+  "epochs": 1,
+  "batch_size": 32,
+  "lr": 5e-05,
+  "train_size": 1000,
+  "val_size": 500,
+  "val_accuracy": 0.934,
+  "dataset": "ErfanMoosavi/fake-news-detection-dataset-English",
+  "device": "cpu"
+}

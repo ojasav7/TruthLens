@@ -34,7 +34,8 @@ class FakeNewsClassifier:
 
         self.model.to(self.device)
         self.model.eval()
-        self.labels = ["real", "fake"]
+        # Label order must match training: ErfanMoosavi has 0=fake, 1=real
+        self.labels = ["fake", "real"]
 
     def predict(self, text: str) -> dict:
         """
