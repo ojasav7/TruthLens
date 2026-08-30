@@ -14,7 +14,9 @@ router = APIRouter()
 
 class FrameScore(BaseModel):
     frame: int
-    score: float
+    score: float = 0.0
+    label: str = ""
+    confidence: float = 0.0
 
 
 class VideoPredictionResponse(BaseModel):

@@ -133,43 +133,59 @@ class VideoDeepfakeDetector:
         return True
 
     def predict(self, video_path: str) -> dict:
-        """Classify a video as real or fake using multi-signal ensemble."""
+        """Classify a video as real or fake using per-frame image analysis + temporal consistency."""
+        import cv2
         frames = self._extract_frames(video_path)
         if not frames:
             return {"label": "real", "confidence": 0.0, "per_frame_scores": []}
 
-        # --- Multi-signal ensemble ---
         signals = {}
-
-        # Signal 1: Resolution check
         h, w = frames[0].shape[:2]
         signals["resolution"] = f"{w}x{h}"
         signals["is_low_res"] = w < 100 or h < 100
 
-        # Signal 2: Realism heuristic (texture, color, temporal consistency)
-        is_real = self._is_real_video(frames)
-        signals["is_real_footage"] = is_real
-
-        # Signal 3: CNN+LSTM model prediction
-        video_tensor = self._transform_frames(frames)
-        with torch.no_grad():
-            logits = self.model(video_tensor)
-            probs = torch.softmax(logits, dim=1)
-            pred_idx = probs.argmax(dim=1).item()
-            confidence = probs[0, pred_idx].item()
-
-            # Per-frame scores
-            frame_features = self.model.get_frame_features(video_tensor)
+        # --- Primary signal: run the image model on each frame ---
+        try:
+            from models.image.model import ImageDeepfakeDetector
+            from PIL import Image as PILImage
+            image_detector = ImageDeepfakeDetector()
             frame_scores = []
-            for i in range(frame_features.shape[1]):
-                feat = frame_features[0, i]
-                score = torch.sigmoid(feat.mean()).item()
-                frame_scores.append({"frame": i, "score": round(score, 4)})
+            frame_labels = []
+            for i, frame in enumerate(frames):
+                pil = PILImage.fromarray(frame)
+                result = image_detector.predict(pil)
+                frame_scores.append({
+                    "frame": i,
+                    "label": result["label"],
+                    "confidence": round(result["confidence"], 4),
+                    "cnn_raw": result.get("cnn_raw", {}),
+                })
+                frame_labels.append(result["label"])
+            # Aggregate: majority vote among frames that detected a face
+            face_frames = [s for s in frame_scores if s.get("cnn_raw") and s["cnn_raw"].get("label") in ("real", "fake")]
+            if face_frames:
+                fake_votes = sum(1 for s in face_frames if s["label"] == "fake")
+                real_votes = sum(1 for s in face_frames if s["label"] == "real")
+                total = len(face_frames)
+                signals["image_per_frame"] = {
+                    "total_frames": total,
+                    "fake_votes": fake_votes,
+                    "real_votes": real_votes,
+                }
+                # CNN raw scores (from the trained model, before ensemble)
+                cnn_fake_scores = [s["cnn_raw"]["confidence"] for s in face_frames if s["cnn_raw"]["label"] == "fake"]
+                cnn_real_scores = [s["cnn_raw"]["confidence"] for s in face_frames if s["cnn_raw"]["label"] == "real"]
+                avg_cnn_fake = np.mean(cnn_fake_scores) if cnn_fake_scores else 0
+                avg_cnn_real = np.mean(cnn_real_scores) if cnn_real_scores else 0
+            else:
+                fake_votes = 0; real_votes = 0; total = 0
+                avg_cnn_fake = 0; avg_cnn_real = 0
+        except Exception as e:
+            signals["image_per_frame_error"] = str(e)
+            fake_votes = 0; real_votes = 0; total = 0
+            avg_cnn_fake = 0; avg_cnn_real = 0
 
-        model_label = self.labels[pred_idx]
-        signals["model"] = {"label": model_label, "confidence": round(confidence, 4)}
-
-        # Signal 4: Frame-to-frame consistency
+        # --- Signal 2: Temporal consistency ---
         diffs = []
         for i in range(1, min(len(frames), 10)):
             diff = np.abs(frames[i].astype(float) - frames[i-1].astype(float)).mean()
@@ -177,88 +193,35 @@ class VideoDeepfakeDetector:
         avg_diff = np.mean(diffs) if diffs else 0
         signals["temporal_diff"] = round(avg_diff, 2)
 
-        # Signal 5: FFT frequency analysis (deepfakes have more high-freq artifacts)
-        fft_scores = []
-        for frame in frames[:5]:
-            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-            f_transform = np.fft.fft2(gray)
-            f_shift = np.fft.fftshift(f_transform)
-            magnitude = np.log(np.abs(f_shift) + 1)
-            fh, fw = magnitude.shape
-            center_h, center_w = fh // 2, fw // 2
-            radius = min(fh, fw) // 4
-            total_energy = magnitude.sum()
-            low_energy = magnitude[center_h-radius:center_h+radius, center_w-radius:center_w+radius].sum()
-            hf_ratio = 1.0 - (low_energy / (total_energy + 1e-10))
-            fft_scores.append(hf_ratio)
-        signals["fft_hf_ratio"] = round(float(np.mean(fft_scores)), 4)
-
-        # Signal 6: Compression artifacts (block boundary analysis)
-        block_scores = []
-        for frame in frames[:3]:
-            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY).astype(float)
-            fh_b, fw_b = gray.shape
-            if fh_b >= 16 and fw_b >= 16:
-                v_diff = np.abs(gray[8::8, :] - np.roll(gray[8::8, :], 1, axis=1)).mean()
-                h_diff = np.abs(gray[:, 8::8] - np.roll(gray[:, 8::8], 1, axis=0)).mean()
-                block_scores.append((v_diff + h_diff) / 2)
-        signals["compression_artifacts"] = round(float(np.mean(block_scores)) if block_scores else 0, 4)
-
-        # Signal 7: Color channel correlation
-        channel_corrs = []
-        for frame in frames[:5]:
-            r, g, b = frame[:,:,0].astype(float), frame[:,:,1].astype(float), frame[:,:,2].astype(float)
-            rg_corr = np.corrcoef(r.flatten(), g.flatten())[0, 1]
-            rb_corr = np.corrcoef(r.flatten(), b.flatten())[0, 1]
-            gb_corr = np.corrcoef(g.flatten(), b.flatten())[0, 1]
-            channel_corrs.append(abs(rg_corr) + abs(rb_corr) + abs(gb_corr))
-        signals["channel_correlation"] = round(float(np.mean(channel_corrs)), 4)
-
         # --- Decision logic ---
-        # For compressed video (FF++ c23), signal-level analysis is unreliable.
-        # Use the trained CNN+LSTM model as primary signal, with signal checks
-        # for obvious synthetic content (very low resolution, no faces, etc.)
-
-        # Build explanation
-        vote_details = []
-        vote_details.append(f"Model: {model_label} ({confidence:.1%})")
-        vote_details.append(f"Temporal: {avg_diff:.1f}")
-        vote_details.append(f"FFT HF: {signals['fft_hf_ratio']:.3f}")
-        vote_details.append(f"Compression: {signals['compression_artifacts']:.1f}")
-        vote_details.append(f"Channel corr: {signals['channel_correlation']:.2f}")
-
-        # Check for obviously synthetic content
-        is_obviously_synthetic = (
-            signals["is_low_res"] and
-            signals["fft_hf_ratio"] > 0.8 and
-            avg_diff > 50
-        )
-        is_obviously_real = (
-            not signals["is_low_res"] and
-            signals["compression_artifacts"] > 3 and
-            signals["channel_correlation"] > 4.0
-        )
-
-        if is_obviously_synthetic:
-            label = "fake"
-            conf = 0.85
-        elif is_obviously_real:
-            label = "real"
-            conf = 0.80
-        elif model_label == "fake" and confidence > 0.6:
-            label = "fake"
-            conf = confidence
-        elif model_label == "real" and confidence > 0.6:
-            label = "real"
-            conf = confidence
+        # Use per-frame image model as primary signal
+        if total > 0:
+            fake_ratio = fake_votes / total
+            if fake_ratio > 0.5:
+                label = "fake"
+                conf = min(0.95, 0.5 + fake_ratio * 0.45)
+            elif fake_ratio < 0.2:
+                label = "real"
+                conf = min(0.95, 0.5 + (1 - fake_ratio) * 0.45)
+            else:
+                label = "indeterminate"
+                conf = 0.5 + abs(fake_ratio - 0.5) * 0.4
+        elif signals["is_low_res"]:
+            label = "indeterminate"
+            conf = 0.3
         else:
             label = "indeterminate"
-            conf = confidence
+            conf = 0.3
+
+        vote_details = []
+        vote_details.append(f"Frames analyzed: {total}")
+        vote_details.append(f"Fake votes: {fake_votes}, Real votes: {real_votes}")
+        vote_details.append(f"Temporal diff: {avg_diff:.1f}")
 
         return {
             "label": label,
             "confidence": round(conf, 4),
-            "per_frame_scores": frame_scores,
+            "per_frame_scores": frame_scores[:10],
             "signals": signals,
             "verdict": f"Video analysis: {label.upper()} ({conf:.1%}). {' | '.join(vote_details)}",
         }

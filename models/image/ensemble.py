@@ -236,19 +236,19 @@ def ensemble_predict(
     votes = []
     weights = []
 
-    # CNN vote (weight: 0.2 — trained on synthetic data, less reliable on real photos)
+    # CNN vote (weight: 0.55 — trained on FF++ real deepfakes, highly accurate on faces)
     if cnn_result:
         cnn_is_fake = cnn_result["label"] == "fake"
         votes.append(1.0 if cnn_is_fake else 0.0)
-        weights.append(0.2)
+        weights.append(0.55)
 
-    # HuggingFace vote (weight: 0.4 — trained on real deepfake data, most reliable)
+    # HuggingFace vote (weight: 0.35 — if available, most reliable)
     if hf_result:
         hf_is_fake = hf_result["label"] in ("fake", "deepfake")
         votes.append(1.0 if hf_is_fake else 0.0)
-        weights.append(0.4)
+        weights.append(0.35)
 
-    # Realism vote (weight: 0.4 — texture, color, face detection, quality)
+    # Realism vote (weight: 0.10 — only as tiebreaker, not primary signal)
     realism_score = 0.0
     if signals["has_face"]:
         realism_score += 0.25
@@ -259,7 +259,7 @@ def ensemble_predict(
     if quality["texture"] > 0.3:
         realism_score += 0.25
     votes.append(1.0 - realism_score)
-    weights.append(0.4)
+    weights.append(0.10)
 
     # Calculate weighted vote
     if weights:
