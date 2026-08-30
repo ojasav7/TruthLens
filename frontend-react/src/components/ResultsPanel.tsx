@@ -3,6 +3,9 @@ import VerdictBadge from "./VerdictBadge";
 import ModalityCard from "./ModalityCard";
 import VoiceAnalysisPanel from "./VoiceAnalysisPanel";
 import MisinfoPanel from "./MisinfoPanel";
+import DeepfakeImagePanel from "./DeepfakeImagePanel";
+import C2paPanel from "./C2paPanel";
+import ExifPanel from "./ExifPanel";
 
 interface ResultsPanelProps {
   result: {
@@ -151,9 +154,7 @@ export default function ResultsPanel({ result, inputText }: ResultsPanelProps) {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Modality-Specific Animated Panels */}
+      </div>      {/* Modality-Specific Animated Panels */}
       {breakdown.audio && (
         <VoiceAnalysisPanel
           confidence={breakdown.audio?.confidence ?? 0}
@@ -161,12 +162,32 @@ export default function ResultsPanel({ result, inputText }: ResultsPanelProps) {
           signals={breakdown.audio?.signals}
         />
       )}
-      {breakdown.text && !breakdown.audio && (          <MisinfoPanel
+      {breakdown.text && !breakdown.audio && (
+        <MisinfoPanel
           confidence={breakdown.text?.confidence ?? 0}
           label={breakdown.text?.label ?? "unknown"}
           text={inputText}
           signals={breakdown.text?.signals}
         />
+      )}
+      {breakdown.image && (
+        <div className="space-y-8">
+          <DeepfakeImagePanel
+            confidence={breakdown.image?.confidence ?? 0}
+            label={breakdown.image?.label ?? "unknown"}
+            signals={breakdown.image?.signals}
+          />
+          <C2paPanel
+            confidence={breakdown.image?.confidence ?? 0}
+            label={breakdown.image?.label ?? "unknown"}
+            signals={breakdown.image?.signals}
+          />
+          <ExifPanel
+            confidence={breakdown.image?.confidence ?? 0}
+            label={breakdown.image?.label ?? "unknown"}
+            signals={breakdown.image?.signals}
+          />
+        </div>
       )}
 
       {/* Modality Breakdown */}
