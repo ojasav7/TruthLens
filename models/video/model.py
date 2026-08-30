@@ -146,9 +146,11 @@ class VideoDeepfakeDetector:
 
         # --- Primary signal: run the image model on each frame ---
         try:
-            from models.image.model import ImageDeepfakeDetector
-            from PIL import Image as PILImage
-            image_detector = ImageDeepfakeDetector()
+            from backend.services.model_loader import get_image_model
+            image_detector = get_image_model()
+            if image_detector is None:
+                from models.image.model import ImageDeepfakeDetector
+                image_detector = ImageDeepfakeDetector()
             frame_scores = []
             frame_labels = []
             for i, frame in enumerate(frames):
