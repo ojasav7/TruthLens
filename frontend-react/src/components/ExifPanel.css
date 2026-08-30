@@ -42,9 +42,9 @@
   font-family: var(--font-mono);
   font-size: 9px;
   padding: 3px 10px;
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--color-primary);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
   border-radius: 3px;
 }
 
@@ -127,7 +127,7 @@
   animation: exifTagAppear 0.3s ease forwards;
 }
 .exif-panel__tag:hover {
-  background: rgba(34, 197, 94, 0.05);
+  background: rgba(6, 182, 212, 0.05);
 }
 .exif-panel__tag--flagged {
   color: var(--color-destructive);
@@ -184,15 +184,15 @@
 
 .exif-panel__tamper-badge {
   padding: 8px 12px;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
   border-radius: 4px;
   text-align: center;
 }
 .exif-panel__tamper-title {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: var(--color-primary);
+  color: #06b6d4;
   font-weight: 600;
   margin-bottom: 4px;
 }

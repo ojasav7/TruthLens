@@ -34,7 +34,7 @@ export default function ExifPanel({ label }: ExifProps) {
       ctx.fillRect(0, 0, W, H);
 
       // Grid
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.04)";
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.04)";
       ctx.lineWidth = 1;
       for (let x = 0; x < W; x += 20) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
@@ -50,7 +50,7 @@ export default function ExifPanel({ label }: ExifProps) {
       // Head outline
       ctx.beginPath();
       ctx.ellipse(cx, cy, 80, 100, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(34, 197, 94, ${0.3 + Math.sin(t) * 0.1})`;
+      ctx.strokeStyle = `rgba(6, 182, 212, ${0.3 + Math.sin(t) * 0.1})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -59,7 +59,7 @@ export default function ExifPanel({ label }: ExifProps) {
         const r = 30 + i * 25 + Math.sin(t * 2 + i) * 5;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(34, 197, 94, ${0.15 - i * 0.04})`;
+        ctx.strokeStyle = `rgba(6, 182, 212, ${0.15 - i * 0.04})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -69,7 +69,7 @@ export default function ExifPanel({ label }: ExifProps) {
       ctx.beginPath();
       ctx.moveTo(cx - chSize, cy); ctx.lineTo(cx + chSize, cy);
       ctx.moveTo(cx, cy - chSize); ctx.lineTo(cx, cy + chSize);
-      ctx.strokeStyle = `rgba(34, 197, 94, ${0.3 + Math.sin(t * 3) * 0.2})`;
+      ctx.strokeStyle = `rgba(6, 182, 212, ${0.3 + Math.sin(t * 3) * 0.2})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -77,12 +77,12 @@ export default function ExifPanel({ label }: ExifProps) {
       [-25, 25].forEach((dx) => {
         ctx.beginPath();
         ctx.arc(cx + dx, cy - 15, 5, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(34, 197, 94, ${0.5 + Math.sin(t * 4 + dx) * 0.3})`;
+        ctx.strokeStyle = `rgba(6, 182, 212, ${0.5 + Math.sin(t * 4 + dx) * 0.3})`;
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(cx + dx, cy - 15, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(34, 197, 94, 0.9)";
+        ctx.fillStyle = "rgba(6, 182, 212, 0.9)";
         ctx.fill();
       });
 
@@ -92,9 +92,9 @@ export default function ExifPanel({ label }: ExifProps) {
       ctx.moveTo(cx - 80, scanY);
       ctx.lineTo(cx + 80, scanY);
       const scanGrad = ctx.createLinearGradient(cx - 80, 0, cx + 80, 0);
-      scanGrad.addColorStop(0, "rgba(34, 197, 94, 0)");
-      scanGrad.addColorStop(0.5, "rgba(34, 197, 94, 0.5)");
-      scanGrad.addColorStop(1, "rgba(34, 197, 94, 0)");
+      scanGrad.addColorStop(0, "rgba(6, 182, 212, 0)");
+      scanGrad.addColorStop(0.5, "rgba(6, 182, 212, 0.5)");
+      scanGrad.addColorStop(1, "rgba(6, 182, 212, 0)");
       ctx.strokeStyle = scanGrad;
       ctx.lineWidth = 2;
       ctx.stroke();
