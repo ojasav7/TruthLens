@@ -32,12 +32,12 @@ class VideoDeepfakeDetector:
             state_dict = torch.load(weights_file, map_location=self.device, weights_only=True)
             try:
                 self.model.load_state_dict(state_dict)
-                print("Loaded trained video weights (hidden=64)")
+                print("[Video] Loaded trained video weights (hidden=64)")
             except RuntimeError:
                 # Fall back to original architecture
                 self.model = VideoDeepfakeModel(num_classes=2, hidden_dim=128)
                 self.model.load_state_dict(state_dict)
-                print("Loaded trained video weights (hidden=128)")
+                print("[Video] Loaded trained video weights (hidden=128)")
         else:
             print(f"No weights at {weights_file}, using untrained model")
 
