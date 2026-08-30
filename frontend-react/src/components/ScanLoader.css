@@ -1,0 +1,96 @@
+.scan-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #0a0a0a, #000000, #000000);
+}
+
+.scan-loader-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  user-select: none;
+}
+
+.scan-loader-letter {
+  display: inline-block;
+  color: var(--color-primary, #22c55e);
+  opacity: 0.4;
+  animation: scanLetter 3s infinite;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.scan-loader-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: scanCircle 5s linear infinite;
+}
+
+@keyframes scanCircle {
+  0% {
+    transform: rotate(90deg);
+    box-shadow:
+      0 6px 12px 0 #22c55e inset,
+      0 12px 18px 0 #16a34a inset,
+      0 36px 36px 0 #0a5c2c inset,
+      0 0 3px 1.2px rgba(34, 197, 94, 0.3),
+      0 0 6px 1.8px rgba(22, 163, 74, 0.2);
+  }
+  50% {
+    transform: rotate(270deg);
+    box-shadow:
+      0 6px 12px 0 #4ade80 inset,
+      0 12px 6px 0 #22c55e inset,
+      0 24px 36px 0 #16a34a inset,
+      0 0 3px 1.2px rgba(34, 197, 94, 0.3),
+      0 0 6px 1.8px rgba(22, 163, 74, 0.2);
+  }
+  100% {
+    transform: rotate(450deg);
+    box-shadow:
+      0 6px 12px 0 #22c55e inset,
+      0 12px 18px 0 #16a34a inset,
+      0 36px 36px 0 #0a5c2c inset,
+      0 0 3px 1.2px rgba(34, 197, 94, 0.3),
+      0 0 6px 1.8px rgba(22, 163, 74, 0.2);
+  }
+}
+
+@keyframes scanLetter {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-loader-letter,
+  .scan-loader-circle {
+    animation: none;
+  }
+  .scan-loader-circle {
+    box-shadow:
+      0 0 20px 4px rgba(34, 197, 94, 0.2) inset,
+      0 0 6px 1.2px rgba(34, 197, 94, 0.3);
+  }
+  .scan-loader-letter {
+    opacity: 0.8;
+  }
+}

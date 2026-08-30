@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import InputPanel from "./components/InputPanel";
 import EmptyState from "./components/EmptyState";
 import ResultsPanel from "./components/ResultsPanel";
+import ScanLoader from "./components/ScanLoader";
 import LandingPage from "./pages/LandingPage";
 import { API_URL } from "./lib/utils";
 
@@ -107,14 +108,7 @@ function Dashboard() {
             ) : (
               !loading && <EmptyState />
             )}
-            {loading && (
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="size-12 border-2 border-border border-t-primary rounded-full animate-spin mb-4"></div>
-                <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-                  Running forensic scan…
-                </div>
-              </div>
-            )}
+            {loading && <ScanLoader text="Analyzing" />}
           </main>
         </div>
       </div>
