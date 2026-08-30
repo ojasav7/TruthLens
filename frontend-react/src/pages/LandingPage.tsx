@@ -2,6 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import heroScan from "../assets/hero-scan.jpg";
 import { useScrollReveal } from "../hooks/useScrollReveal";
+import ScanVideo from "../components/scans/ScanVideo";
+import ScanText from "../components/scans/ScanText";
+import ScanProvenance from "../components/scans/ScanProvenance";
+import ScanMetadata from "../components/scans/ScanMetadata";
+import ScanHeatmap from "../components/scans/ScanHeatmap";
+import ScanAudio from "../components/scans/ScanAudio";
+import "../components/scans/ScanCards.css";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -157,6 +164,28 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Scan Gallery */}
+        <section className="py-24 border-t border-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+              <h2 className="text-4xl font-extrabold tracking-tighter uppercase">
+                Scan Capabilities
+              </h2>
+              <p className="max-w-xs text-sm text-muted-foreground font-mono uppercase leading-relaxed tracking-tighter">
+                Real-time forensic analysis across every media vector.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
+              <ScanVideo />
+              <ScanText />
+              <ScanProvenance />
+              <ScanMetadata />
+              <ScanHeatmap />
+              <ScanAudio />
             </div>
           </div>
         </section>

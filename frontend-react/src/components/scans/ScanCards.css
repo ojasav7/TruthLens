@@ -1,0 +1,322 @@
+/* Scan Card Styles */
+.scan-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.scan-card:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  transform: translateY(-2px);
+}
+
+.scan-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.scan-card__icon {
+  font-size: 14px;
+}
+
+.scan-card__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.1em;
+  flex: 1;
+}
+
+.scan-card__status {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 8px;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 2px;
+  animation: scanStatusPulse 2s ease-in-out infinite;
+}
+
+.scan-card__body {
+  padding: 12px;
+}
+
+.scan-card__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== VIDEO ANIMATIONS ===== */
+.scan-video-progress {
+  animation: scanVideoProgress 3s ease-in-out infinite;
+}
+
+.scan-video-frame {
+  opacity: 0;
+  animation: scanVideoFrameIn 0.3s ease forwards;
+}
+
+.scan-video-flash {
+  animation: scanVideoFlash 0.5s ease forwards;
+}
+
+.scan-video-line {
+  animation: scanVideoLine 2s ease-in-out infinite;
+}
+
+.scan-video-playhead {
+  animation: scanVideoPlayhead 3s linear infinite;
+}
+
+/* ===== TEXT ANIMATIONS ===== */
+.scan-text-word {
+  opacity: 0;
+  animation: scanTextWordIn 0.3s ease forwards;
+}
+
+.scan-text-bar-fill {
+  animation: scanTextBarFill 1s ease forwards;
+}
+
+.scan-text-flag {
+  opacity: 0;
+  animation: scanTextFlagIn 0.3s ease forwards;
+}
+
+.scan-text-scanline {
+  animation: scanTextScanline 2s ease-in-out infinite;
+}
+
+/* ===== PROVENANCE ANIMATIONS ===== */
+.scan-prov-node {
+  opacity: 0;
+  animation: scanProvNodeIn 0.4s ease forwards;
+}
+
+.scan-prov-line {
+  stroke-dashoffset: 100;
+  animation: scanProvLineDraw 1s ease forwards;
+}
+
+.scan-prov-cert {
+  opacity: 0;
+  animation: scanProvCertIn 0.5s ease 0.8s forwards;
+}
+
+.scan-prov-pulse {
+  animation: scanProvPulse 2s ease-in-out infinite;
+}
+
+/* ===== METADATA ANIMATIONS ===== */
+.scan-meta-circle {
+  animation: scanMetaCircle 3s ease-in-out infinite;
+}
+
+.scan-meta-dot {
+  animation: scanMetaDot 1.5s ease-in-out infinite;
+}
+
+.scan-meta-scanline {
+  animation: scanMetaScanline 2s ease-in-out infinite;
+}
+
+.scan-meta-tag {
+  opacity: 0;
+  animation: scanMetaTagIn 0.3s ease forwards;
+}
+
+.scan-meta-flag {
+  animation: scanMetaFlag 1s ease-in-out infinite;
+}
+
+/* ===== HEATMAP ANIMATIONS ===== */
+.scan-heat-glow {
+  animation: scanHeatGlow 2s ease-in-out infinite;
+}
+
+.scan-heat-eye {
+  animation: scanHeatEye 1.5s ease-in-out infinite;
+}
+
+.scan-heat-line {
+  animation: scanHeatLine 1.5s ease-in-out infinite;
+}
+
+.scan-heat-badge {
+  opacity: 0;
+  animation: scanHeatBadgeIn 0.5s ease 0.5s forwards;
+}
+
+.scan-heat-scanline {
+  animation: scanHeatScanline 2s ease-in-out infinite;
+}
+
+/* ===== AUDIO ANIMATIONS ===== */
+.scan-audio-bar {
+  animation: scanAudioBar 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.scan-audio-ghost {
+  animation: scanAudioGhost 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.scan-audio-playhead {
+  animation: scanAudioPlayhead 3s linear infinite;
+}
+
+/* ===== KEYFRAMES ===== */
+@keyframes scanStatusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes scanVideoProgress {
+  0% { width: 0; }
+  100% { width: 360; }
+}
+
+@keyframes scanVideoFrameIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scanVideoFlash {
+  0% { opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes scanVideoLine {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes scanVideoPlayhead {
+  0% { cx: 20; }
+  100% { cx: 380; }
+}
+
+@keyframes scanTextWordIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scanTextBarFill {
+  from { width: 0; }
+}
+
+@keyframes scanTextFlagIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scanTextScanline {
+  0% { transform: translateY(-30px); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translateY(200px); opacity: 0; }
+}
+
+@keyframes scanProvNodeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scanProvLineDraw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes scanProvCertIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scanProvPulse {
+  0%, 100% { r: 8; opacity: 0.3; }
+  50% { r: 14; opacity: 0; }
+}
+
+@keyframes scanMetaCircle {
+  0%, 100% { r: 50; opacity: 0.3; }
+  50% { r: 55; opacity: 0.5; }
+}
+
+@keyframes scanMetaDot {
+  0%, 100% { r: 4; }
+  50% { r: 6; }
+}
+
+@keyframes scanMetaScanline {
+  0% { transform: translateY(-20px); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translateY(180px); opacity: 0; }
+}
+
+@keyframes scanMetaTagIn {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scanMetaFlag {
+  0%, 100% { r: 3; }
+  50% { r: 5; }
+}
+
+@keyframes scanHeatGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes scanHeatEye {
+  0%, 100% { r: 8; }
+  50% { r: 10; }
+}
+
+@keyframes scanHeatLine {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes scanHeatBadgeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scanHeatScanline {
+  0% { transform: translateY(-30px); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(200px); opacity: 0; }
+}
+
+@keyframes scanAudioBar {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.3); }
+}
+
+@keyframes scanAudioGhost {
+  0%, 100% { transform: scaleY(1) translateX(2px); }
+  50% { transform: scaleY(0.8) translateX(-2px); }
+}
+
+@keyframes scanAudioPlayhead {
+  0% { x1: 20; x2: 20; }
+  100% { x1: 380; x2: 380; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .scan-card * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
