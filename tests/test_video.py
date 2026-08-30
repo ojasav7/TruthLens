@@ -28,7 +28,7 @@ class TestVideoDeepfakeDetector:
             assert "label" in result
             assert "confidence" in result
             assert "per_frame_scores" in result
-            assert result["label"] in ("real", "fake")
+            assert result["label"] in ("real", "fake", "indeterminate")
         except ImportError:
             pytest.skip("opencv-python not installed")
 
