@@ -105,7 +105,7 @@ export default function C2paPanel({ label }: C2paProps) {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Icon placeholder
+        // Center dot
         ctx.beginPath();
         ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
         ctx.fillStyle = isVerified ? "rgba(34, 197, 94, 0.8)" : "rgba(239, 68, 68, 0.6)";
@@ -113,7 +113,7 @@ export default function C2paPanel({ label }: C2paProps) {
 
         // Label
         ctx.font = "600 8px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "var(--color-muted-foreground)";
+        ctx.fillStyle = "#9ca3af";
         ctx.textAlign = "center";
         ctx.fillText(n.label.toUpperCase(), n.x, n.y + 28);
       });
@@ -129,31 +129,30 @@ export default function C2paPanel({ label }: C2paProps) {
   const isVerified = label === "real";
 
   const signedEntries = [
-    "Signed by True Lens v4.0 (Adobe XMP Toolkit)",
-    "Signed Service: 0x88837.2492320",
-    "Content Hash: 0x0a0f25 ts your cert Stpper3Sec10",
-    "Signed Root: ver 202310030 1:10.(4007,4552903)",
-    "Signed Hash: may 4y (295,730)",
-    "Created Hash: 0x80, 00.73 for 120001)",
-    "Linked: 0x0856, 4957 364, 5032944",
-    "Signed Total: 499203",
+    { key: "Signed By", value: "TruthLens v4.0 (Adobe C2PA Toolkit)" },
+    { key: "Assertion Service", value: "c2pa.truthlens.io" },
+    { key: "Content Hash", value: "sha256-0a3f7c2e8b1d..." },
+    { key: "Certificate", value: "Valid (expires 2027-03-15)" },
+    { key: "Signature Algorithm", value: "ES256 (P-256 + SHA-256)" },
+    { key: "Trust Anchor", value: "C2PA Root CA (Adobe)" },
+    { key: "Timestamp", value: "2026-08-30T09:23:17Z" },
+    { key: "Manifest Store", value: "1 active claim" },
   ];
 
   const categories = [
-    { label: "1. Valid Stack", count: 1 },
-    { label: "2. Core Certificate", count: 1 },
-    { label: "3. Manifest", count: 3 },
-    { label: "4. Units/Logs", count: 3 },
-    { label: "7. User Log", count: 1 },
-    { label: "8. By Hash", count: "" },
+    { label: "Valid Claims", count: 1 },
+    { label: "Core Certificate", count: 1 },
+    { label: "Manifest Assertions", count: 3 },
+    { label: "Hash Mappings", count: 4 },
+    { label: "User Assertions", count: 1 },
   ];
 
   const bottomMetrics = [
-    { label: "Templates", value: ">" },
-    { label: "Linked", value: ">" },
-    { label: "Proving", value: ">" },
-    { label: "Teering", value: ">" },
-    { label: "Getting", value: ">" },
+    { label: "Provenance", value: "Verified" },
+    { label: "Integrity", value: "Passed" },
+    { label: "Revocation", value: "Clear" },
+    { label: "Timestamp", value: "Valid" },
+    { label: "Chain", value: "Complete" },
   ];
 
   return (
@@ -184,15 +183,16 @@ export default function C2paPanel({ label }: C2paProps) {
                 className="c2pa-panel__cert-entry"
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
-                {entry}
+                <span className="c2pa-panel__cert-key">{entry.key}:</span>
+                <span className="c2pa-panel__cert-value">{entry.value}</span>
               </div>
             ))}
           </div>
           <div className="c2pa-panel__categories">
-            <div className="c2pa-panel__categories-title">Categories:</div>
+            <div className="c2pa-panel__categories-title">Validation Summary:</div>
             {categories.map((cat) => (
               <div key={cat.label} className="c2pa-panel__category">
-                {cat.label} {cat.count}
+                {cat.label}: <span className="c2pa-panel__category-count">{cat.count}</span>
               </div>
             ))}
           </div>
@@ -201,7 +201,7 @@ export default function C2paPanel({ label }: C2paProps) {
         {/* Center - Chain of trust flow */}
         <div className="c2pa-panel__flow">
           <div className="c2pa-panel__flow-header">
-            <span className="c2pa-panel__flow-label">Conflicts</span>
+            <span className="c2pa-panel__flow-label">Chain of Trust</span>
             <span className="c2pa-panel__flow-filter">Signatures ▾</span>
           </div>
           <canvas ref={canvasRef} className="c2pa-panel__canvas" />
@@ -211,11 +211,11 @@ export default function C2paPanel({ label }: C2paProps) {
       {/* Bottom metrics */}
       <div className="c2pa-panel__bottom">
         <div className="c2pa-panel__bottom-left">
-          <div className="c2pa-panel__bottom-title">Apparatus</div>
+          <div className="c2pa-panel__bottom-title">Verification Checks</div>
           <div className="c2pa-panel__bottom-items">
             {bottomMetrics.map((m) => (
               <div key={m.label} className="c2pa-panel__bottom-item">
-                {m.label} {m.value}
+                {m.label}: <span className="c2pa-panel__bottom-value">{m.value}</span>
               </div>
             ))}
           </div>
@@ -236,23 +236,23 @@ export default function C2paPanel({ label }: C2paProps) {
               />
             </svg>
             <div className="c2pa-panel__donut-label">
-              CONFLICT<br />{isVerified ? "NONE" : "FOUND"}
+              STATUS<br />{isVerified ? "VERIFIED" : "FAILED"}
             </div>
           </div>
         </div>
         <div className="c2pa-panel__bottom-right">
           <div className="c2pa-panel__hashes">
             <div className="c2pa-panel__hash-col">
-              <div className="c2pa-panel__hash-title">Traces</div>
-              {["10111910", "01041600", "10460000", "02244500", "06746230"].map((h) => (
-                <div key={h} className="c2pa-panel__hash-val">{h}</div>
-              ))}
+              <div className="c2pa-panel__hash-title">Assertion URIs</div>
+              <div className="c2pa-panel__hash-val">c2pa://claim/0x3a7f</div>
+              <div className="c2pa-panel__hash-val">c2pa://claim/0x8b2e</div>
+              <div className="c2pa-panel__hash-val">c2pa://claim/0x1d4c</div>
             </div>
             <div className="c2pa-panel__hash-col">
-              <div className="c2pa-panel__hash-title">Verified</div>
-              {["1600001700", "1257444148", "1050106500", "1646257200", "1067002107"].map((h) => (
-                <div key={h} className="c2pa-panel__hash-val">{h}</div>
-              ))}
+              <div className="c2pa-panel__hash-title">Hash Values</div>
+              <div className="c2pa-panel__hash-val">sha256-0a3f7c</div>
+              <div className="c2pa-panel__hash-val">sha256-9e1b4d</div>
+              <div className="c2pa-panel__hash-val">sha256-5f8a2c</div>
             </div>
           </div>
         </div>

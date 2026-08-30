@@ -123,30 +123,33 @@ export default function ExifPanel({ label }: ExifProps) {
   const isTampered = label === "fake";
 
   const exifTags = [
-    { line: 1, text: "12  Matter Issussed Field", flagged: false },
-    { line: 42, text: "Cust Tesk A Sate Teks ANEED CDP,", flagged: true },
-    { line: 45, text: "Anent Sectar folic Lows", flagged: true },
-    { line: 47, text: "Weiepes: FEPPS GPP 3 hes 23 conte(609)", flagged: false },
-    { line: 19, text: "Trdectal — CBM,", flagged: true },
-    { line: 45, text: "Ancradate: Past neteratfonyments,,ourraisstedd", flagged: false },
-    { line: 7, text: "tiffers,,pilgep", flagged: true },
-    { line: 60, text: "Rej as 1as facters cancer cistances GPP", flagged: true },
-    { line: 73, text: "Hosses: (Gft lavdcei seatcets, Shingcrefal)", flagged: false },
-    { line: 72, text: "Tampver 1:08 lerising = Groute,", flagged: true },
-    { line: 16, text: "Hex e delereiesf ficg cetes", flagged: false },
-    { line: 72, text: "Reports: Bar/ T meslying oaosline detoing strater", flagged: false },
-    { line: 28, text: "Micence al (castanpe — CEMDO,)", flagged: true },
-    { line: 29, text: "Terepes: AL Tostercaing conator rnoFGSS fetetor", flagged: false },
-    { line: 87, text: "Renies — ref Fortmations GEP7.", flagged: true },
-    { line: 37, text: "Assors are nate datlery softringind", flagged: false },
-    { line: 72, text: "Relessoces (YUOL etorprader anxia for VQL ~10)", flagged: false },
-    { line: 18, text: "Tetanbers rnetertg — 18.", flagged: true },
-    { line: 57, text: "Tnerger erl weing Mssing compeie-mew10.00", flagged: true },
+    { line: 1, tag: "Make", value: "Canon", flagged: false },
+    { line: 2, tag: "Model", value: "Canon EOS R5", flagged: false },
+    { line: 3, tag: "Software", value: "Adobe Photoshop 25.0", flagged: true },
+    { line: 4, tag: "DateTime", value: "2024:11:30 15:30:00", flagged: false },
+    { line: 5, tag: "ExposureTime", value: "1/250 sec", flagged: false },
+    { line: 6, tag: "FNumber", value: "f/2.8", flagged: false },
+    { line: 7, tag: "ISOSpeedRatings", value: "400", flagged: false },
+    { line: 8, tag: "FocalLength", value: "85mm", flagged: false },
+    { line: 9, tag: "ImageWidth", value: "8192 px", flagged: false },
+    { line: 10, tag: "ImageHeight", value: "5464 px", flagged: false },
+    { line: 11, tag: "ColorSpace", value: "sRGB IEC61966-2.1", flagged: false },
+    { line: 12, tag: "GPSLatitude", value: "28.6139° N", flagged: false },
+    { line: 13, tag: "GPSLongitude", value: "77.2090° E", flagged: false },
+    { line: 14, tag: "Orientation", value: "Horizontal (normal)", flagged: false },
+    { line: 15, tag: "PixelXDimension", value: "8192", flagged: false },
+    { line: 16, tag: "Compression", value: "JPEG (lossy)", flagged: false },
+    { line: 17, tag: "ThumbnailOffset", value: "0x0104 (260)", flagged: false },
+    { line: 18, tag: "XMPToolkit", value: "Adobe XMP Core 7.0", flagged: true },
+    { line: 19, tag: "HistoryAction", value: "saved, converted", flagged: true },
+    { line: 20, tag: "DerivedFrom", value: "Original document", flagged: false },
   ];
 
   const stats = [
-    { label: "EXIF Data Total", values: ["9000", "05,805"] },
-    { label: "Status", values: ["3,22.00", "545.50"] },
+    { label: "Total Tags", value: `${exifTags.length}` },
+    { label: "Flagged", value: `${exifTags.filter(t => t.flagged).length}` },
+    { label: "File Size", value: "4.2 MB" },
+    { label: "Resolution", value: "8192 × 5464" },
   ];
 
   return (
@@ -155,11 +158,11 @@ export default function ExifPanel({ label }: ExifProps) {
       <div className="exif-panel__header">
         <div className="exif-panel__title">
           <span className="exif-panel__menu">☰</span>
-          EXIF Metadata
+          EXIF Metadata Analysis
         </div>
         <div className="exif-panel__header-right">
-          <span className="exif-panel__status">Master Fecties</span>
-          <span className="exif-panel__badge">ASSTRENST ▾</span>
+          <span className="exif-panel__status">Master Field</span>
+          <span className="exif-panel__badge">EXIF/DCF ▾</span>
         </div>
       </div>
 
@@ -168,22 +171,22 @@ export default function ExifPanel({ label }: ExifProps) {
         <div className="exif-panel__scan">
           <div className="exif-panel__scan-header">
             <span className="exif-panel__scan-dot" />
-            ENFF DFCP metedies analyins
+            EXIF Metadata Scan
           </div>
           <canvas ref={canvasRef} className="exif-panel__canvas" />
           <div className="exif-panel__scan-footer">
-            <span>6AT</span>
-            <span>9:30</span>
-            <span>A89M</span>
-            <span>1 2 3 4 1 0 0 B</span>
+            <span>RAW</span>
+            <span>24.1 MP</span>
+            <span>CMOS</span>
+            <span>3:2</span>
           </div>
         </div>
 
         {/* Right - EXIF tags */}
         <div className="exif-panel__tags">
           <div className="exif-panel__tags-header">
-            <span>EXIFERCUNCIUPS</span>
-            <span className="exif-panel__tags-count">{exifTags.length}</span>
+            <span>EXIF/DCF Fields</span>
+            <span className="exif-panel__tags-count">{exifTags.length} fields</span>
           </div>
           <div className="exif-panel__tags-list">
             {exifTags.map((tag, i) => (
@@ -193,7 +196,8 @@ export default function ExifPanel({ label }: ExifProps) {
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
                 <span className="exif-panel__tag-line">{tag.line}</span>
-                <span className="exif-panel__tag-text">{tag.text}</span>
+                <span className="exif-panel__tag-name">{tag.tag}</span>
+                <span className="exif-panel__tag-value">{tag.value}</span>
               </div>
             ))}
           </div>
@@ -206,19 +210,15 @@ export default function ExifPanel({ label }: ExifProps) {
           {stats.map((s) => (
             <div key={s.label} className="exif-panel__stat-group">
               <div className="exif-panel__stat-label">{s.label}</div>
-              <div className="exif-panel__stat-vals">
-                {s.values.map((v) => (
-                  <span key={v} className="exif-panel__stat-val">{v}</span>
-                ))}
-              </div>
+              <div className="exif-panel__stat-value">{s.value}</div>
             </div>
           ))}
         </div>
         <div className="exif-panel__stats-center">
           <div className="exif-panel__tamper-badge">
-            <div className="exif-panel__tamper-title">Tampered</div>
+            <div className="exif-panel__tamper-title">Tampering Detection</div>
             <div className="exif-panel__tamper-value">
-              {isTampered ? "Calibrated" : "Normal"}
+              {isTampered ? "Tampered" : "Normal"}
             </div>
             {isTampered && (
               <div className="exif-panel__tamper-bar">
@@ -228,8 +228,10 @@ export default function ExifPanel({ label }: ExifProps) {
           </div>
         </div>
         <div className="exif-panel__stats-right">
-          <div className="exif-panel__version">Lack 1</div>
-          <div className="exif-panel__version">Correct</div>
+          <div className="exif-panel__version">Tags Matched</div>
+          <div className="exif-panel__version-value">
+            {exifTags.filter(t => !t.flagged).length}/{exifTags.length} clean
+          </div>
         </div>
       </div>
     </div>

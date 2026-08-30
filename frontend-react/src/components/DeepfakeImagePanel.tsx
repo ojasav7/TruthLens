@@ -131,16 +131,16 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
   ];
 
   const rightBars = [
-    { label: "1u5", value: isFake ? 0.75 : 0.30, color: "var(--color-amber)" },
-    { label: "AoC", value: isFake ? 0.60 : 0.25, color: "var(--color-destructive)" },
-    { label: "1s8", value: isFake ? 0.45 : 0.20, color: "var(--color-primary)" },
-    { label: "Ud", value: isFake ? 0.55 : 0.35, color: "var(--color-amber)" },
+    { label: "Luminance", value: isFake ? 0.75 : 0.30, color: "var(--color-amber)" },
+    { label: "Chroma", value: isFake ? 0.60 : 0.25, color: "var(--color-destructive)" },
+    { label: "Saturation", value: isFake ? 0.45 : 0.20, color: "var(--color-primary)" },
+    { label: "Hue Shift", value: isFake ? 0.55 : 0.35, color: "var(--color-amber)" },
   ];
 
   const metrics = [
     { label: "Face Samples", value: signals?.faces_detected ?? 1 },
     { label: "Eye Distortion", value: `${isFake ? 8.3 : 1.2}%` },
-    { label: "Network Periages", value: signals?.network_periages ?? "Normal" },
+    { label: "Network Faces", value: signals?.network_periages ?? "Normal" },
   ];
 
   return (
@@ -178,8 +178,8 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
             ))}
           </div>
           <div className="deepfake-panel__legend">
-            <span><span className="deepfake-panel__legend-dot deepfake-panel__legend-dot--green" /> Samples</span>
-            <span><span className="deepfake-panel__legend-dot deepfake-panel__legend-dot--red" /> Peakled</span>
+            <span><span className="deepfake-panel__legend-dot deepfake-panel__legend-dot--green" /> Detected</span>
+            <span><span className="deepfake-panel__legend-dot deepfake-panel__legend-dot--red" /> Flagged</span>
           </div>
         </div>
 
@@ -191,7 +191,7 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
         {/* Right - Confidence bars */}
         <div className="deepfake-panel__right">
           <div className="deepfake-panel__confidence-badge">
-            {isFake ? "1759" : "CLEAN"}
+            {isFake ? "THREAT" : "CLEAN"}
           </div>
           <div className="deepfake-panel__section-title">Channel Data</div>
           <div className="deepfake-panel__bars deepfake-panel__bars--right">
@@ -231,15 +231,15 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
       {/* Footer */}
       <div className="deepfake-panel__footer">
         <div className="deepfake-panel__footer-item">
-          <span className="deepfake-panel__footer-icon">%</span>
+          <span className="deepfake-panel__footer-icon">🔍</span>
           Forensic CAM Analysis
         </div>
         <div className="deepfake-panel__footer-item">
-          <span className="deepfake-panel__footer-icon">%</span>
+          <span className="deepfake-panel__footer-icon">📊</span>
           Confidence: {confidence > 0.7 ? "HIGH" : confidence > 0.4 ? "MEDIUM" : "LOW"} ({(confidence * 100).toFixed(0)}%)
         </div>
         <div className="deepfake-panel__footer-item">
-          <span className="deepfake-panel__footer-icon">%</span>
+          <span className="deepfake-panel__footer-icon">👥</span>
           Network Faces: {signals?.faces_detected ?? 0} — {(confidence * 100).toFixed(0)}% manipulation
         </div>
       </div>

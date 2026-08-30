@@ -142,8 +142,23 @@
   text-align: right;
   flex-shrink: 0;
 }
+.exif-panel__tag-name {
+  color: var(--color-muted-foreground);
+  width: 140px;
+  flex-shrink: 0;
+}
+.exif-panel__tag--flagged .exif-panel__tag-name {
+  color: var(--color-destructive);
+}
 .exif-panel__tag-text {
   flex: 1;
+}
+.exif-panel__tag-value {
+  flex: 1;
+  color: var(--color-foreground);
+}
+.exif-panel__tag--flagged .exif-panel__tag-value {
+  color: var(--color-destructive);
 }
 
 /* Stats */
@@ -172,11 +187,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
-.exif-panel__stat-vals {
-  display: flex;
-  gap: 16px;
-}
-.exif-panel__stat-val {
+.exif-panel__stat-value {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--color-foreground);
@@ -220,6 +231,12 @@
   font-family: var(--font-mono);
   font-size: 9px;
   color: var(--color-muted-foreground);
+}
+.exif-panel__version-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 /* Animations */
