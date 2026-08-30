@@ -22,6 +22,7 @@ interface AnalysisResult {
 function Dashboard() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [inputText, setInputText] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<"live" | "down" | "checking">("checking");
 
@@ -52,6 +53,7 @@ function Dashboard() {
     async (data: { text?: string; image?: File; video?: File; audio?: File }) => {
       setLoading(true);
       setError(null);
+      setInputText(data.text);
       try {
         const formData = new FormData();
         if (data.text) formData.append("text", data.text);
@@ -104,7 +106,7 @@ function Dashboard() {
               </div>
             )}
             {result ? (
-              <ResultsPanel result={result} />
+              <ResultsPanel result={result} inputText={inputText} />
             ) : (
               !loading && <EmptyState />
             )}

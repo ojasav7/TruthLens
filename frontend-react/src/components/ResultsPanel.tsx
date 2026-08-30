@@ -1,6 +1,8 @@
 import ThreatGauge from "./ThreatGauge";
 import VerdictBadge from "./VerdictBadge";
 import ModalityCard from "./ModalityCard";
+import VoiceAnalysisPanel from "./VoiceAnalysisPanel";
+import MisinfoPanel from "./MisinfoPanel";
 
 interface ResultsPanelProps {
   result: {
@@ -12,6 +14,7 @@ interface ResultsPanelProps {
     trace_id?: string;
     input_types?: string[];
   };
+  inputText?: string;
 }
 
 function generateSummary(result: ResultsPanelProps["result"]): { icon: string; color: string; title: string; body: string; tip: string } {
@@ -57,7 +60,7 @@ function generateSummary(result: ResultsPanelProps["result"]): { icon: string; c
   };
 }
 
-export default function ResultsPanel({ result }: ResultsPanelProps) {
+export default function ResultsPanel({ result, inputText }: ResultsPanelProps) {
   const breakdown = result.breakdown || {};
   const summary = generateSummary(result);
   const modalities = Object.entries(breakdown)
@@ -149,6 +152,22 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
           </div>
         </div>
       </div>
+
+      {/* Modality-Specific Animated Panels */}
+      {breakdown.audio && (
+        <VoiceAnalysisPanel
+          confidence={breakdown.audio?.confidence ?? 0}
+          label={breakdown.audio?.label ?? "unknown"}
+          signals={breakdown.audio?.signals}
+        />
+      )}
+      {breakdown.text && !breakdown.audio && (          <MisinfoPanel
+          confidence={breakdown.text?.confidence ?? 0}
+          label={breakdown.text?.label ?? "unknown"}
+          text={inputText}
+          signals={breakdown.text?.signals}
+        />
+      )}
 
       {/* Modality Breakdown */}
       {modalities.length > 0 && (
