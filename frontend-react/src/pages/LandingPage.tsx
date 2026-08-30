@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import heroScan from "../assets/hero-scan.jpg";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -16,6 +17,12 @@ export default function LandingPage() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const modalityRef = useScrollReveal();
+  const intelligenceRef = useScrollReveal();
+  const infraRef = useScrollReveal();
+  const statsRef = useScrollReveal();
+  const ctaRef = useScrollReveal();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -155,7 +162,7 @@ export default function LandingPage() {
         </section>
 
         {/* Modality Grid */}
-        <section id="protocols" className="py-24 border-t border-border" aria-labelledby="modality-heading">
+        <section ref={modalityRef} id="protocols" className="py-24 border-t border-border scroll-hidden" aria-labelledby="modality-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
               <h2 id="modality-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
@@ -173,8 +180,8 @@ export default function LandingPage() {
                 { num: "02", title: "Diffusion Forensics", desc: "CNN detection of GAN and Stable Diffusion artifacts in sub-frame level." },
                 { num: "03", title: "Temporal Deepfake", desc: "MobileNetV2 + LSTM consistency checks revealing unnatural frame transitions and lip-sync errors." },
                 { num: "04", title: "Voice Clone ID", desc: "1D-CNN raw waveform analysis to identify frequency anomalies in AI-generated voice." },
-              ].map((item) => (
-                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors" role="listitem">
+              ].map((item, i) => (
+                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors scroll-hidden-stagger" role="listitem" style={{ transitionDelay: `${i * 0.08}s` }}>
                   <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
                     {item.num}
                   </div>
@@ -191,7 +198,7 @@ export default function LandingPage() {
         </section>
 
         {/* Intelligence Section */}
-        <section id="intelligence" className="py-24 border-t border-border" aria-labelledby="intelligence-heading">
+        <section ref={intelligenceRef} id="intelligence" className="py-24 border-t border-border scroll-hidden" aria-labelledby="intelligence-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
               <h2 id="intelligence-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
@@ -210,8 +217,8 @@ export default function LandingPage() {
                 { num: "08", title: "Red Team Lab", desc: "Adversarial robustness testing — apply jitter, compression, noise, and re-encode to stress-test models." },
                 { num: "09", title: "Drift Monitor", desc: "Real-time model performance tracking with automatic alerts on accuracy degradation." },
                 { num: "10", title: "Case Management", desc: "Organize investigations into cases with timeline views, reviewer assignment, and status tracking." },
-              ].map((item) => (
-                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors" role="listitem">
+              ].map((item, i) => (
+                <div key={item.num} className="bg-background p-8 group hover:bg-primary/5 transition-colors scroll-hidden-stagger" role="listitem" style={{ transitionDelay: `${i * 0.08}s` }}>
                   <div className="font-mono text-[10px] text-primary mb-8 uppercase tracking-widest">
                     {item.num}
                   </div>
@@ -228,7 +235,7 @@ export default function LandingPage() {
         </section>
 
         {/* Infrastructure Section */}
-        <section id="infrastructure" className="py-24 border-t border-border" aria-labelledby="infra-heading">
+        <section ref={infraRef} id="infrastructure" className="py-24 border-t border-border scroll-hidden" aria-labelledby="infra-heading">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
               <h2 id="infra-heading" className="text-4xl font-extrabold tracking-tighter uppercase">
@@ -244,8 +251,8 @@ export default function LandingPage() {
                 { icon: "shield", title: "Secure Sandbox", items: ["Upload validation", "MIME + magic bytes", "Privacy mode", "Data retention policies"] },
                 { icon: "chart", title: "Observability", items: ["Prometheus metrics", "Trace IDs per analysis", "System health checks", "Performance monitoring"] },
                 { icon: "rocket", title: "Deployment", items: ["Docker ready", "Kubernetes manifests", "Chrome extension", "Telegram / Slack / Discord bots"] },
-              ].map((card) => (
-                <article key={card.title} className="bg-background border border-border p-8 hover:border-primary/30 transition-colors">
+              ].map((card, i) => (
+                <article key={card.title} className="bg-background border border-border p-8 hover:border-primary/30 transition-colors scroll-hidden-stagger" style={{ transitionDelay: `${i * 0.12}s` }}>
                   <div className="text-3xl mb-4" aria-hidden="true">
                     {card.icon === "shield" && "🛡"}
                     {card.icon === "chart" && "📊"}
@@ -267,7 +274,7 @@ export default function LandingPage() {
         </section>
 
         {/* Data Readout / Trust */}
-        <section className="py-24 bg-foreground text-background" aria-label="Platform statistics">
+        <section ref={statsRef} className="py-24 bg-foreground text-background scroll-hidden" aria-label="Platform statistics">
           <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12">
             <div>
               <div className="text-5xl font-extrabold tracking-tighter mb-2" style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -297,7 +304,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-24 border-t border-border" aria-labelledby="cta-heading">
+        <section ref={ctaRef} className="py-24 border-t border-border scroll-hidden" aria-labelledby="cta-heading">
           <div className="max-w-7xl mx-auto px-6 text-center">
             <h2 id="cta-heading" className="text-4xl md:text-5xl font-extrabold tracking-tighter uppercase mb-6">
               Ready to Scan?
