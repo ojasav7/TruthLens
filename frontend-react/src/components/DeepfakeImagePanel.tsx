@@ -43,7 +43,7 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
         grad.addColorStop(1, "rgba(0, 0, 0, 0)");
       } else {
         grad.addColorStop(0, `rgba(34, 197, 94, ${0.3 + Math.sin(t * 2) * 0.1})`);
-        grad.addColorStop(0.5, `rgba(6, 182, 212, ${0.15 + Math.sin(t * 1.5) * 0.05})`);
+        grad.addColorStop(0.5, `rgba(34, 197, 94, ${0.15 + Math.sin(t * 1.5) * 0.05})`);
         grad.addColorStop(1, "rgba(0, 0, 0, 0)");
       }
       ctx.fillStyle = grad;
@@ -74,24 +74,24 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
       [-40, 40].forEach((dx) => {
         ctx.beginPath();
         ctx.arc(cx + dx, eyeY, 8, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(6, 182, 212, ${0.5 + Math.sin(t * 4 + dx) * 0.3})`;
+        ctx.strokeStyle = `rgba(34, 197, 94, ${0.5 + Math.sin(t * 4 + dx) * 0.3})`;
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(cx + dx, eyeY, 2, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(6, 182, 212, 0.8)";
+        ctx.fillStyle = "rgba(34, 197, 94, 0.8)";
         ctx.fill();
       });
 
       // Nose/mouth markers
       ctx.beginPath();
       ctx.arc(cx, cy + 20, 4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(6, 182, 212, ${0.4 + Math.sin(t * 5) * 0.3})`;
+      ctx.fillStyle = `rgba(34, 197, 94, ${0.4 + Math.sin(t * 5) * 0.3})`;
       ctx.fill();
 
       ctx.beginPath();
       ctx.arc(cx, cy + 60, 15, 0, Math.PI);
-      ctx.strokeStyle = `rgba(6, 182, 212, ${0.3 + Math.sin(t * 2.5) * 0.2})`;
+      ctx.strokeStyle = `rgba(34, 197, 94, ${0.3 + Math.sin(t * 2.5) * 0.2})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -101,7 +101,7 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
         ctx.beginPath();
         ctx.moveTo(x-8, y); ctx.lineTo(x+8, y);
         ctx.moveTo(x, y-8); ctx.lineTo(x, y+8);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.4)";
+        ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
         ctx.lineWidth = 1;
         ctx.stroke();
       });
