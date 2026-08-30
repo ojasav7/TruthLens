@@ -7,6 +7,7 @@ import EmptyState from "./components/EmptyState";
 import ResultsPanel from "./components/ResultsPanel";
 import ScanLoader from "./components/ScanLoader";
 import LandingPage from "./pages/LandingPage";
+import SettingsPage from "./pages/SettingsPage";
 import { API_URL } from "./lib/utils";
 
 interface AnalysisResult {
@@ -124,6 +125,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </BrowserRouter>
   );
