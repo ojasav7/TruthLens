@@ -14,8 +14,52 @@ interface ResultsPanelProps {
   };
 }
 
+function generateSummary(result: ResultsPanelProps["result"]): { icon: string; color: string; title: string; body: string; tip: string } {
+  const score = result.threat_score;
+  const verdict = result.verdict.toLowerCase();
+  const breakdown = result.breakdown || {};
+  const modalities = Object.keys(breakdown).filter((k) => breakdown[k] !== null);
+  const modalityList = modalities.map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(" and ");
+
+  if (verdict.includes("high risk") || score > 70) {
+    const textLabel = breakdown.text?.label;
+    const imageLabel = breakdown.image?.label;
+    const reasons: string[] = [];
+    if (textLabel === "fake") reasons.push("the text contains patterns commonly found in fake news or misinformation");
+    if (imageLabel === "fake") reasons.push("the image shows signs of digital manipulation or AI generation");
+    if (breakdown.audio?.label === "cloned" || breakdown.audio?.label === "fake") reasons.push("the audio has artifacts consistent with AI-generated or cloned voice");
+    const reasonStr = reasons.length > 0 ? ` Specifically, ${reasons.join("; ")}.` : "";
+    return {
+      icon: "\u26A0\uFE0F",
+      color: "destructive",
+      title: "This content is likely fake or manipulated",
+      body: `Our analysis found strong signs that this ${modalityList || "content"} is not authentic. The system is ${Math.round(score)}% confident this is a threat.${reasonStr}`,
+      tip: "We recommend verifying this content through official sources before sharing it.",
+    };
+  }
+
+  if (verdict.includes("low risk") || verdict.includes("review") || (score > 30 && score <= 70)) {
+    return {
+      icon: "\uD83D\uDD0D",
+      color: "amber",
+      title: "This content looks suspicious but we're not sure",
+      body: `Our analysis found some unusual patterns in this ${modalityList || "content"}, but we can't say for certain whether it's real or fake. The system is ${Math.round(score)}% uncertain.`,
+      tip: "Double-check the source. If it's from a trusted outlet, it's probably fine. If it's from social media, look for corroboration.",
+    };
+  }
+
+  return {
+    icon: "\u2705",
+    color: "primary",
+    title: "This content appears to be authentic",
+    body: `Our analysis found no significant signs of manipulation in this ${modalityList || "content"}. The system is ${Math.round(100 - score)}% confident this is genuine.`,
+    tip: "No tool is 100% certain. If this content makes an extraordinary claim, it's still worth checking a second source.",
+  };
+}
+
 export default function ResultsPanel({ result }: ResultsPanelProps) {
   const breakdown = result.breakdown || {};
+  const summary = generateSummary(result);
   const modalities = Object.entries(breakdown)
     .filter(([_, v]) => v !== null && v !== undefined)
     .map(([type, data]: [string, any]) => ({
@@ -79,6 +123,29 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
                 <span>Modalities: {result.input_types.join(", ")}</span>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Plain English Summary */}
+      <div className="border border-border p-6">
+        <div className="font-mono text-[10px] text-primary uppercase tracking-widest mb-4">
+          Plain English Summary
+        </div>
+        <div className="flex gap-4">
+          <span className="text-3xl" role="img" aria-hidden="true">
+            {summary.icon}
+          </span>
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold" style={{ color: `var(--color-${summary.color})` }}>
+              {summary.title}
+            </h3>
+            <p className="text-sm text-foreground leading-relaxed">
+              {summary.body}
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-2 italic">
+              {summary.tip}
+            </p>
           </div>
         </div>
       </div>
