@@ -9,6 +9,7 @@ import ScanLoader from "./components/ScanLoader";
 import LandingPage from "./pages/LandingPage";
 import SettingsPage from "./pages/SettingsPage";
 import CasesPage from "./pages/CasesPage";
+import AdvancedFeaturesPage from "./pages/AdvancedFeaturesPage";
 import { API_URL } from "./lib/utils";
 
 interface AnalysisResult {
@@ -128,6 +129,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/cases" element={<CasesPage />} />
+        <Route path="/advanced" element={<AdvancedFeaturesPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -15,6 +15,7 @@ from backend.db.database import engine, Base
 from backend.db import models, models_advanced, models_reliability  # noqa: F401 — register tables for create_all
 from backend.routers import text, image, video, audio, analyze, stretch, investigations, cases, advanced, streaming, workspaces
 from backend.routers import batch, dashboard, forensics, nextgen, investigation_intel, gap_fills
+from backend.routers import advanced_features
 from backend.middleware import RequestIDMiddleware, setup_logging
 from backend.errors import register_error_handlers, validate_startup
 try:
@@ -99,6 +100,7 @@ app.include_router(forensics.router)
 app.include_router(nextgen.router)
 app.include_router(investigation_intel.router)
 app.include_router(gap_fills.router)
+app.include_router(advanced_features.router)
 
 
 @app.get("/", tags=["Health"])
