@@ -1,17 +1,17 @@
-"""Advanced Features Router — 8 capabilities for misinformation investigation."""
+"""Advanced Features Router — provenance, claims, investigation, explainability, benchmarks."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 
 router = APIRouter(prefix="/advanced", tags=["Advanced Features"])
 
 
-class SourceVerifyReq(BaseModel):
+class UrlReq(BaseModel):
     url: str
 
 
-class ClaimReq(BaseModel):
+class TextReq(BaseModel):
     text: str
 
 
@@ -49,29 +49,66 @@ class ContradictionReq(BaseModel):
     metadata: Optional[dict] = None
 
 
-# --- Feature 1: Source Verification ---
+class BenchmarkEvalReq(BaseModel):
+    modality: str
+    predictions: list[dict]
+
+
+class MetadataReq(BaseModel):
+    metadata: dict
+
+
+class ReverseImageReq(BaseModel):
+    image_hash: str
+
+
+# --- 1. Provenance Verification ---
 
 @router.post("/source-verify")
-async def verify_source(req: SourceVerifyReq):
-    from backend.services.source_verification import verify_source as verify
-    return verify(req.url)
+async def verify_source(req: UrlReq):
+    from backend.services.provenance import verify_source
+    return verify_source(req.url)
 
 
-# --- Feature 2: Claim Extraction ---
+@router.post("/url-reputation")
+async def check_url_reputation(req: UrlReq):
+    from backend.services.provenance import check_url_reputation
+    return check_url_reputation(req.url)
+
+
+@router.post("/validate-metadata")
+async def validate_metadata(req: MetadataReq):
+    from backend.services.provenance import validate_metadata
+    return validate_metadata(req.metadata)
+
+
+@router.post("/reverse-image")
+async def reverse_image_check(req: ReverseImageReq):
+    from backend.services.provenance import reverse_image_check
+    return reverse_image_check(req.image_hash)
+
+
+@router.post("/fact-check")
+async def fact_check(req: TextReq):
+    from backend.services.provenance import get_fact_check
+    return get_fact_check(req.text)
+
+
+# --- 2. Claim Extraction ---
 
 @router.post("/claims/extract")
-async def extract_claims(req: ClaimReq):
+async def extract_claims(req: TextReq):
     from backend.services.claim_extraction import extract_claims
     return extract_claims(req.text)
 
 
 @router.post("/claims/match")
-async def match_evidence(req: ClaimReq):
+async def match_evidence(req: TextReq):
     from backend.services.claim_extraction import match_evidence
     return match_evidence(req.text)
 
 
-# --- Feature 3: Review Workflow ---
+# --- 3. Review Workflow ---
 
 @router.post("/review/assign")
 async def assign_reviewer(req: ReviewReq):
@@ -103,7 +140,13 @@ async def get_audit_trail(analysis_id: str):
     return {"analysis_id": analysis_id, "audit_trail": get_audit_trail(analysis_id)}
 
 
-# --- Feature 4: Timeline ---
+@router.get("/review/list")
+async def list_workflows():
+    from backend.services.review_workflow import list_workflows
+    return {"workflows": list_workflows()}
+
+
+# --- 4. Timeline ---
 
 @router.post("/timeline/event")
 async def add_timeline_event(content_id: str, event_type: str, source: str):
@@ -117,7 +160,7 @@ async def get_timeline(content_id: str):
     return get_timeline(content_id)
 
 
-# --- Feature 5: Explainability ---
+# --- 5. Explainability ---
 
 @router.post("/explain")
 async def explain_decision(req: ExplainReq):
@@ -125,7 +168,7 @@ async def explain_decision(req: ExplainReq):
     return explain(req.modality, req.prediction)
 
 
-# --- Feature 6: Contradiction Engine ---
+# --- 6. Contradiction Engine ---
 
 @router.post("/contradictions")
 async def analyze_contradictions(req: ContradictionReq):
@@ -133,7 +176,7 @@ async def analyze_contradictions(req: ContradictionReq):
     return analyze_contradictions(req.analysis_results, req.metadata)
 
 
-# --- Feature 7: Calibration Dashboard ---
+# --- 7. Calibration Dashboard ---
 
 @router.get("/calibration/dashboard")
 async def get_dashboard():
@@ -147,7 +190,31 @@ async def get_modality_performance():
     return get_modality_performance()
 
 
-# --- Feature 8: Benchmark ---
+# --- 8. Benchmark Dataset ---
+
+@router.get("/benchmark/datasets")
+async def list_datasets():
+    from backend.services.benchmark_service import get_datasets
+    return get_datasets()
+
+
+@router.get("/benchmark/samples/{modality}")
+async def get_samples(modality: str):
+    from backend.services.benchmark_service import get_samples
+    return {"modality": modality, "samples": get_samples(modality)}
+
+
+@router.post("/benchmark/evaluate")
+async def evaluate_benchmark(req: BenchmarkEvalReq):
+    from backend.services.benchmark_service import evaluate_predictions
+    return evaluate_predictions(req.modality, req.predictions)
+
+
+@router.get("/benchmark/metrics")
+async def get_benchmark_metrics():
+    from backend.services.benchmark_service import get_modality_metrics
+    return get_modality_metrics()
+
 
 @router.get("/benchmark/summary")
 async def get_benchmark_summary():

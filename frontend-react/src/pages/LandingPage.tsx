@@ -311,15 +311,15 @@ export default function LandingPage() {
                 95%+
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
-                Image Detection Accuracy
+                Image Detection (Prototype)
               </div>
             </div>
             <div>
               <div className="text-5xl font-extrabold tracking-tighter mb-2" style={{ fontVariantNumeric: "tabular-nums" }}>
-                100%
+                85%+
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
-                Audio / Video Accuracy
+                Audio / Video Detection (Benchmark)
               </div>
             </div>
             <div>
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 240
               </div>
               <div className="font-mono text-[10px] uppercase tracking-widest opacity-60">
-                Automated Tests Passing
+                API Endpoints Verified
               </div>
             </div>
           </div>
