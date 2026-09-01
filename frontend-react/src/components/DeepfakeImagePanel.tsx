@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import AnimatedHeatmap from "./AnimatedHeatmap";
+import "./AnimatedHeatmap.css";
 import "./DeepfakeImagePanel.css";
 
 interface DeepfakeImageProps {
@@ -9,153 +11,13 @@ interface DeepfakeImageProps {
 
 export default function DeepfakeImagePanel({ confidence, label, signals }: DeepfakeImageProps) {
   const [mounted, setMounted] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
 
   useEffect(() => { setMounted(true); }, []);
 
   const isFake = label === "fake";
   const conf = Math.round(confidence * 100);
 
-  // Animated heatmap canvas — beautiful face visualization
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    const W = (canvas.width = 360);
-    const H = (canvas.height = 380);
-    let t = 0;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-
-      // Dark background
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, W, H);
-
-      // Subtle grid
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.03)";
-      ctx.lineWidth = 0.5;
-      for (let x = 0; x < W; x += 24) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-      }
-      for (let y = 0; y < H; y += 24) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      const cx = W / 2;
-      const cy = H / 2 - 10;
-
-      // Face outline — smooth oval
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, 70, 95, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = isFake
-        ? `rgba(239, 68, 68, ${0.4 + Math.sin(t * 2) * 0.15})`
-        : `rgba(34, 197, 94, ${0.4 + Math.sin(t * 2) * 0.15})`;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Inner face features — eyes
-      const eyeY = cy - 15;
-      [-22, 22].forEach((dx) => {
-        // Eye socket
-        ctx.beginPath();
-        ctx.ellipse(cx + dx, eyeY, 12, 7, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = isFake
-          ? `rgba(239, 68, 68, ${0.3 + Math.sin(t * 3 + dx) * 0.15})`
-          : `rgba(34, 197, 94, ${0.3 + Math.sin(t * 3 + dx) * 0.15})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Pupil
-        ctx.beginPath();
-        ctx.arc(cx + dx, eyeY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = isFake
-          ? `rgba(239, 68, 68, ${0.6 + Math.sin(t * 4 + dx) * 0.2})`
-          : `rgba(34, 197, 94, ${0.6 + Math.sin(t * 4 + dx) * 0.2})`;
-        ctx.fill();
-      });
-
-      // Nose
-      ctx.beginPath();
-      ctx.moveTo(cx - 6, cy + 5);
-      ctx.lineTo(cx, cy + 18);
-      ctx.lineTo(cx + 6, cy + 5);
-      ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Mouth
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 40, 18, 6, 0, 0, Math.PI);
-      ctx.strokeStyle = `rgba(255, 255, 255, 0.12)`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Scanning line — sweeps across face
-      const scanY = (cy - 95) + ((t * 35) % 190);
-      const scanGrad = ctx.createLinearGradient(cx - 70, 0, cx + 70, 0);
-      scanGrad.addColorStop(0, "rgba(34, 197, 94, 0)");
-      scanGrad.addColorStop(0.3, isFake ? "rgba(239, 68, 68, 0.4)" : "rgba(34, 197, 94, 0.4)");
-      scanGrad.addColorStop(0.5, isFake ? "rgba(239, 68, 68, 0.7)" : "rgba(34, 197, 94, 0.7)");
-      scanGrad.addColorStop(0.7, isFake ? "rgba(239, 68, 68, 0.4)" : "rgba(34, 197, 94, 0.4)");
-      scanGrad.addColorStop(1, "rgba(34, 197, 94, 0)");
-      ctx.beginPath();
-      ctx.moveTo(cx - 70, scanY);
-      ctx.lineTo(cx + 70, scanY);
-      ctx.strokeStyle = scanGrad;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Corner brackets
-      const bSize = 16;
-      const corners = [
-        [cx - 55, cy - 75], [cx + 55, cy - 75],
-        [cx - 55, cy + 75], [cx + 55, cy + 75]
-      ];
-      corners.forEach(([x, y], i) => {
-        const dx = i % 2 === 0 ? 1 : -1;
-        const dy = i < 2 ? 1 : -1;
-        ctx.beginPath();
-        ctx.moveTo(x, y + dy * bSize);
-        ctx.lineTo(x, y);
-        ctx.lineTo(x + dx * bSize, y);
-        ctx.strokeStyle = isFake
-          ? `rgba(239, 68, 68, ${0.4 + Math.sin(t + i) * 0.15})`
-          : `rgba(34, 197, 94, ${0.4 + Math.sin(t + i) * 0.15})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      });
-
-      // Confidence ring around face
-      const ringProgress = confidence;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 110, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ringProgress);
-      ctx.strokeStyle = isFake
-        ? `rgba(239, 68, 68, 0.3)`
-        : `rgba(34, 197, 94, 0.3)`;
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Confidence text
-      ctx.font = "700 22px 'JetBrains Mono', monospace";
-      ctx.fillStyle = isFake ? "rgba(239, 68, 68, 0.8)" : "rgba(34, 197, 94, 0.8)";
-      ctx.textAlign = "center";
-      ctx.fillText(`${conf}%`, cx, H - 30);
-
-      ctx.font = "500 9px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.fillText(isFake ? "MANIPULATION DETECTED" : "NO MANIPULATION DETECTED", cx, H - 14);
-
-      t += 0.015;
-      animRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => cancelAnimationFrame(animRef.current);
-  }, [label, confidence, isFake, conf]);
 
   const channelBars = [
     { label: "Frequency", value: isFake ? 0.72 : 0.35, severity: isFake ? "high" : "low" },
@@ -217,9 +79,9 @@ export default function DeepfakeImagePanel({ confidence, label, signals }: Deepf
           </div>
         </div>
 
-        {/* Center — Face Canvas */}
+        {/* Center — Animated Heatmap */}
         <div className="dfp__center">
-          <canvas ref={canvasRef} className="dfp__canvas" />
+          <AnimatedHeatmap style={{ width: "100%", height: "100%", minHeight: 380 }} />
           <div className="dfp__badge-row">
             <span className={`dfp__badge ${isFake ? "dfp__badge--threat" : "dfp__badge--clean"}`}>
               {isFake ? "THREAT" : "CLEAN"}

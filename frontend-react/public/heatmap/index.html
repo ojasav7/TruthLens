@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARDVA deepfakk — animated scan heatmap</title>
+<style>
+  :root{
+    --W: 1024;
+    --H: 768;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden}
+  body{
+    display:flex;align-items:center;justify-content:center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  /* Scale the fixed 1024x768 composition to fit any viewport */
+  .stage{
+    width:1024px;height:768px;
+    transform-origin:center center;
+    will-change:transform;
+  }
+  .frame{
+    position:relative;
+    width:1024px;height:768px;
+    background:#000;
+    overflow:hidden;
+    animation: frameIn 1100ms cubic-bezier(.16,.84,.28,1) both;
+  }
+  @keyframes frameIn{
+    from{opacity:0;transform:scale(.985)}
+    to{opacity:1;transform:scale(1)}
+  }
+  .plate{
+    position:absolute;inset:0;
+    width:1024px;height:768px;
+    display:block;
+    image-rendering:auto;
+    -webkit-user-select:none;user-select:none;
+  }
+
+  /* Sprites are exact pixel crops of the source image.
+     They are only translated / clipped / opacity-faded —
+     never recoloured or filtered in a way that shifts hue. */
+  .sp{
+    position:absolute;
+    display:block;
+    overflow:hidden;
+    will-change:transform,opacity;
+  }
+  .sp img{
+    position:absolute;
+    display:block;
+    left:0;top:0;
+  }
+
+  /* ---------- GREEN HORIZONTAL BARS: wipe out from the axis ---------- */
+  .bar-g{
+    transform-origin: 0% 50%;
+    animation: growX 900ms cubic-bezier(.22,1,.28,1) both;
+  }
+  @keyframes growX{
+    from{ clip-path: inset(0 100% 0 0); opacity:.25 }
+    60% { opacity:1 }
+    to  { clip-path: inset(0 0 0 0);    opacity:1 }
+  }
+
+  /* ---------- ORANGE VERTICAL BARS: rise from the baseline ---------- */
+  .bar-o{
+    animation: growY 1000ms cubic-bezier(.2,1.02,.3,1) both;
+  }
+  @keyframes growY{
+    from{ clip-path: inset(100% 0 0 0); opacity:.3 }
+    55% { opacity:1 }
+    to  { clip-path: inset(0 0 0 0);     opacity:1 }
+  }
+  /* gentle continuous breathing on the tallest orange bars */
+  .bar-o .pulse{
+    position:absolute;inset:0;
+    animation: barBreath 3200ms ease-in-out infinite;
+    animation-delay: var(--bd, 0ms);
+  }
+  @keyframes barBreath{
+    0%,100%{ opacity:0 }
+    50%    { opacity:.16 }
+  }
+
+  /* ---------- PROGRESS BAR: fill left to right ---------- */
+  .bar-p{
+    animation: growX 1400ms cubic-bezier(.3,.9,.2,1) both;
+    animation-delay: 1500ms;
+  }
+
+  /* ---------- CHEVRONS: idle nudge ---------- */
+  .chev-l{ animation: nudgeL 2600ms ease-in-out infinite }
+  .chev-r{ animation: nudgeR 2600ms ease-in-out infinite }
+  @keyframes nudgeL{
+    0%,100%{transform:translateX(0);opacity:.75}
+    50%    {transform:translateX(-3px);opacity:1}
+  }
+  @keyframes nudgeR{
+    0%,100%{transform:translateX(0);opacity:.75}
+    50%    {transform:translateX(3px);opacity:1}
+  }
+
+  /* ================= FX LAYERS ================= */
+  .fx{ position:absolute; pointer-events:none; }
+
+  /* Face panel: 340,195 -> 702,575 (exact source bounds) */
+  .face{
+    left:340px; top:195px; width:362px; height:380px;
+    overflow:hidden;
+  }
+
+  /* Scan line sweeping down the face — built from the image's own
+     amber/red heat colours so no new hue is introduced. */
+  .scanline{
+    position:absolute; left:0; width:100%; height:96px; top:-96px;
+    background: linear-gradient(to bottom,
+      rgba(255,90,0,0) 0%,
+      rgba(255,100,0,.04) 50%,
+      rgba(255,129,2,.10) 84%,
+      rgba(255,150,20,.18) 97%,
+      rgba(255,165,40,.24) 100%);
+    mix-blend-mode: screen;
+    animation: sweep 4600ms cubic-bezier(.45,0,.55,1) infinite;
+    animation-delay: 900ms;
+  }
+  @keyframes sweep{
+    0%   { transform: translateY(0);     opacity:0 }
+    8%   { opacity:1 }
+    88%  { opacity:1 }
+    100% { transform: translateY(476px); opacity:0 }
+  }
+
+  /* thin bright leading edge of the scan */
+  .scanedge{
+    position:absolute; left:0; width:100%; height:2px; top:-2px;
+    background: rgba(255,171,51,.55);
+    box-shadow: 0 0 8px 1px rgba(255,129,2,.40);
+    mix-blend-mode: screen;
+    animation: sweepEdge 4600ms cubic-bezier(.45,0,.55,1) infinite;
+    animation-delay: 900ms;
+  }
+  @keyframes sweepEdge{
+    0%   { transform: translateY(0);     opacity:0 }
+    6%   { opacity:.9 }
+    90%  { opacity:.9 }
+    100% { transform: translateY(578px); opacity:0 }
+  }
+
+  /* Heat bloom breathing over the hottest cheek/eye region */
+  .heat{
+    position:absolute;
+    left:96px; top:74px; width:230px; height:210px;
+    background: radial-gradient(closest-side,
+      rgba(255,129,2,.20), rgba(255,60,0,.09) 55%, rgba(255,0,0,0) 100%);
+    mix-blend-mode: screen;
+    filter: blur(16px);
+    animation: heatBreath 3800ms ease-in-out infinite;
+  }
+  @keyframes heatBreath{
+    0%,100%{ opacity:.18; transform:scale(.97) }
+    50%    { opacity:.46; transform:scale(1.04) }
+  }
+
+  /* Eye focus reticle ping — sits on the detected eye at ~628,342 */
+  .ping{
+    position:absolute;
+    left:266px; top:129px; width:26px; height:26px;
+    margin:-13px 0 0 -13px;
+    border:1px solid rgba(255,171,51,.8);
+    border-radius:50%;
+    animation: ping 3800ms ease-out infinite;
+    animation-delay:1600ms;
+    mix-blend-mode:screen;
+  }
+  @keyframes ping{
+    0%   { transform:scale(.35); opacity:0 }
+    12%  { opacity:.95 }
+    70%  { transform:scale(2.6); opacity:0 }
+    100% { transform:scale(2.6); opacity:0 }
+  }
+
+  /* Corner brackets on the face panel, drawn in the image's teal */
+  .brk{
+    position:absolute; width:22px; height:22px;
+    border:2px solid rgba(102,225,190,.55);
+    animation: brkIn 900ms ease-out both, brkGlow 3200ms ease-in-out infinite 900ms;
+  }
+  .brk.tl{ left:4px;  top:4px;    border-right:0; border-bottom:0 }
+  .brk.tr{ right:4px; top:4px;    border-left:0;  border-bottom:0 }
+  .brk.bl{ left:4px;  bottom:4px; border-right:0; border-top:0 }
+  .brk.br{ right:4px; bottom:4px; border-left:0;  border-top:0 }
+  @keyframes brkIn{ from{opacity:0;transform:scale(1.5)} to{opacity:1;transform:scale(1)} }
+  @keyframes brkGlow{ 0%,100%{opacity:.4} 50%{opacity:.95} }
+
+  /* Grain/flicker so the whole board feels live */
+  .flicker{
+    position:absolute; inset:0;
+    background: rgba(255,255,255,.012);
+    mix-blend-mode: screen;
+    animation: flick 5s steps(2,end) infinite;
+  }
+  @keyframes flick{ 0%,100%{opacity:.3} 33%{opacity:.9} 66%{opacity:.15} }
+
+  /* Teal status pill breathing (top right of the orange panel) */
+  .pill{
+    left:892px; top:196px; width:42px; height:17px;
+    border-radius:9px;
+    box-shadow: 0 0 0 0 rgba(73,201,176,.45);
+    animation: pillPulse 2800ms ease-out infinite 1800ms;
+  }
+  @keyframes pillPulse{
+    0%  { box-shadow:0 0 0 0 rgba(73,201,176,.5) }
+    70% { box-shadow:0 0 0 9px rgba(73,201,176,0) }
+    100%{ box-shadow:0 0 0 0 rgba(73,201,176,0) }
+  }
+
+  /* Legend gradient strip shimmer (bottom-left colour scale) */
+  .legend{
+    left:137px; top:540px; width:187px; height:12px;
+    overflow:hidden;
+  }
+  .legend i{
+    position:absolute; top:0; left:-40%; width:40%; height:100%;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0), rgba(255,255,255,.22), rgba(255,255,255,0));
+    mix-blend-mode: overlay;
+    animation: shimmer 3400ms ease-in-out infinite 2200ms;
+  }
+  @keyframes shimmer{
+    0%  { transform:translateX(0) }
+    100%{ transform:translateX(350%) }
+  }
+
+  /* Soft vignette pulse on the outer frame border */
+  .halo{
+    inset:52px 47px 41px 52px;
+    border:1px solid rgba(56,180,150,.12);
+    animation: halo 5200ms ease-in-out infinite;
+  }
+  @keyframes halo{ 0%,100%{opacity:.35} 50%{opacity:.9} }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:1ms !important; animation-iteration-count:1 !important}
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="frame" id="frame">
+    <img class="plate" src="assets/plate.png" alt="ARDVA deepfakk scan heatmap dashboard">
+    <!-- sprites injected here -->
+    <div id="sprites"></div>
+
+    <div class="fx halo"></div>
+
+    <div class="fx face">
+      <div class="heat"></div>
+      <div class="scanline"></div>
+      <div class="scanedge"></div>
+      <div class="ping"></div>
+      <div class="brk tl"></div>
+      <div class="brk tr"></div>
+      <div class="brk bl"></div>
+      <div class="brk br"></div>
+    </div>
+
+    <div class="fx pill"></div>
+    <div class="fx legend"><i></i></div>
+    <div class="fx flicker"></div>
+  </div>
+</div>
+<script>
+(async function () {
+  const meta = await (await fetch('assets/meta.json')).json();
+  const host = document.getElementById('sprites');
+
+  function place(o, cls, extra) {
+    const d = document.createElement('div');
+    d.className = 'sp ' + cls;
+    d.style.left = o.x + 'px';
+    d.style.top = o.y + 'px';
+    d.style.width = o.w + 'px';
+    d.style.height = o.h + 'px';
+    const img = new Image();
+    img.src = 'assets/' + o.src;
+    img.width = o.w;
+    img.height = o.h;
+    img.alt = '';
+    d.appendChild(img);
+    if (extra) extra(d);
+    host.appendChild(d);
+    return d;
+  }
+
+  // Green horizontal bars — staggered wipe from the axis, top to bottom
+  meta.green.forEach((o, i) => {
+    place(o, 'bar-g', d => {
+      d.style.animationDelay = (260 + i * 62) + 'ms';
+    });
+  });
+
+  // Orange vertical bars — rise from baseline, left to right
+  meta.orange.forEach((o, i) => {
+    place(o, 'bar-o', d => {
+      d.style.animationDelay = (620 + i * 130) + 'ms';
+      // reuse the bar's own pixels as the breathing highlight,
+      // so the pulse never introduces a foreign colour
+      const p = document.createElement('div');
+      p.className = 'pulse';
+      p.style.setProperty('--bd', (i * 420) + 'ms');
+      p.style.background = 'rgba(255,129,2,1)';
+      p.style.mixBlendMode = 'screen';
+      d.appendChild(p);
+    });
+  });
+
+  // Bottom-right progress bar fill
+  if (meta.prog) place(meta.prog, 'bar-p');
+
+  // Carousel chevrons
+  if (meta.chev && meta.chev[0]) place(meta.chev[0], 'chev-l');
+  if (meta.chev && meta.chev[1]) place(meta.chev[1], 'chev-r');
+})();
+
+// Fit the fixed 1024x768 board to the viewport without distortion
+(function () {
+  const stage = document.getElementById('stage');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1024, window.innerHeight / 768);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

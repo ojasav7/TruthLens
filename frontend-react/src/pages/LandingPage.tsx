@@ -6,7 +6,8 @@ import ScanVideo from "../components/scans/ScanVideo";
 import ScanText from "../components/scans/ScanText";
 import ScanProvenance from "../components/scans/ScanProvenance";
 import ScanMetadata from "../components/scans/ScanMetadata";
-import ScanHeatmap from "../components/scans/ScanHeatmap";
+import AnimatedHeatmap from "../components/AnimatedHeatmap";
+import "../components/AnimatedHeatmap.css";
 import ScanAudio from "../components/scans/ScanAudio";
 import "../components/scans/ScanCards.css";
 
@@ -184,7 +185,7 @@ export default function LandingPage() {
               <ScanText />
               <ScanProvenance />
               <ScanMetadata />
-              <ScanHeatmap />
+              <AnimatedHeatmap style={{ minHeight: 400 }} />
               <ScanAudio />
             </div>
           </div>
