@@ -1,6 +1,12 @@
 """Contradiction Engine — detects contradictions across modalities."""
 
 
+class ContradictionEngine:
+    """Compatibility wrapper — existing routers call engine.analyze(breakdown)."""
+    def analyze(self, analysis_results: dict, metadata: dict = None) -> dict:
+        return analyze_contradictions(analysis_results, metadata)
+
+
 def analyze_contradictions(analysis_results: dict, metadata: dict = None) -> dict:
     contradictions = []
     text = analysis_results.get("text")

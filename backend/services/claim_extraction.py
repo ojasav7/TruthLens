@@ -3,10 +3,10 @@
 import re
 
 FACT_CHECK_DB = {
-    "climate change": {"verdict": "supported", "sources": ["NASA", "NOAA"]},
-    "vaccine": {"verdict": "supported", "sources": ["WHO", "CDC"]},
-    "5g causes covid": {"verdict": "refuted", "sources": ["WHO", "FCC"]},
-    "earth is flat": {"verdict": "refuted", "sources": ["NASA", "ESA"]},
+    "climate change": {"verdict": "supported", "sources": ["NASA", "NOAA"], "confidence": 0.95},
+    "vaccine": {"verdict": "supported", "sources": ["WHO", "CDC"], "confidence": 0.92},
+    "5g causes covid": {"verdict": "refuted", "sources": ["WHO", "FCC"], "confidence": 0.98},
+    "earth is flat": {"verdict": "refuted", "sources": ["NASA", "ESA"], "confidence": 0.99},
 }
 
 CLAIM_PATTERNS = [
